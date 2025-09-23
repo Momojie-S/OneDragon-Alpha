@@ -1,0 +1,19 @@
+[project]
+name = "onedragon-alpha"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "agentscope==1.0.3",
+    "akshare>=1.17.49",
+    "dotenv>=0.9.9",
+    "fastapi>=0.116.1",
+    "tushare>=1.4.24",
+]
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.10.6",
+    "ruff>=0.13.0",
+]
