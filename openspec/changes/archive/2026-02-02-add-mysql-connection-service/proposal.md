@@ -22,15 +22,16 @@
 ## Impact
 
 **受影响的代码模块**:
-- `src/one_dragon_agent/services/`: 新增 MySQL 连接服务模块
+- `src/one_dragon_alpha/services/mysql/`: 新增 MySQL 连接服务模块
 
 **新增依赖**:
-- 无需新增依赖，使用现有的 `sqlalchemy>=2.0.46` 和 `pymysql>=1.1.2`
+- `aiomysql>=0.3.2`: 异步 MySQL 驱动，提供完整的异步 I/O 支持
+- 使用现有的 `sqlalchemy>=2.0.46`
 
 **API 变更**:
 - 新增 `MySQLConnectionService` 类，提供：
   - `get_session()`: 获取数据库会话
-  - `get_engine()`:获取底层引擎
+  - `get_engine()`: 获取底层引擎
   - `close()`: 关闭所有连接
   - `__aenter__()` / `__aexit__()`: 支持异步上下文管理器
 

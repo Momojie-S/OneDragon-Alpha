@@ -80,7 +80,7 @@ class MySQLConfig:
             msg = "MYSQL_DATABASE environment variable is required"
             raise ValueError(msg)
 
-        return cls(
+        config = cls(
             host=host,
             port=port,
             user=user,
@@ -91,6 +91,8 @@ class MySQLConfig:
             pool_recycle=pool_recycle,
             echo=echo,
         )
+        config.validate()
+        return config
 
     def validate(self) -> None:
         """Validate configuration parameters.

@@ -220,7 +220,7 @@ class MySQLConfig:
 
 ### 目录结构
 
-```
+```text
 src/one_dragon_alpha/services/
 ├── __init__.py
 ├── mysql/

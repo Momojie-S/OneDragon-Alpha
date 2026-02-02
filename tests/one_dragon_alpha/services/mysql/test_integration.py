@@ -66,6 +66,10 @@ class TestMySQLConnectionServiceIntegration:
             assert result1.fetchone()[0] == 1
             assert result2.fetchone()[0] == 2
 
+            # Clean up sessions
+            await session1.close()
+            await session2.close()
+
     @pytest.mark.asyncio
     async def test_session_lifecycle_with_real_database(
         self, config: MySQLConfig

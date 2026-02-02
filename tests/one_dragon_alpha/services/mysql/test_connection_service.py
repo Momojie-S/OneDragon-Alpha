@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for MySQLConnectionService class."""
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -304,7 +305,6 @@ class TestAsyncContextManager:
             "one_dragon_alpha.services.mysql.connection_service.create_async_engine"
         ):
             service = MySQLConnectionService(config)
-            service._is_closed = False
             service._engine.dispose = AsyncMock()
 
             async with service:
@@ -456,7 +456,7 @@ class TestConcurrency:
 
             # Create multiple concurrent tasks
             tasks = [get_session() for _ in range(10)]
-            sessions = await __import__("asyncio").gather(*tasks)
+            sessions = await asyncio.gather(*tasks)
 
             # All sessions should be valid
             assert len(sessions) == 10
@@ -486,7 +486,7 @@ class TestConcurrency:
 
             # Create multiple concurrent close tasks
             tasks = [close_service() for _ in range(5)]
-            await __import__("asyncio").gather(*tasks)
+            await asyncio.gather(*tasks)
 
             # Dispose should only be called once due to lock
             assert service._engine.dispose.call_count == 1

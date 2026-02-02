@@ -40,12 +40,11 @@ from one_dragon_alpha.services.mysql.connection_service import MySQLConnectionSe
 service = MySQLConnectionService()
 
 try:
-    # 获取数据库会话
-    session = await service.get_session()
-
-    # 执行数据库操作
-    result = await session.execute(select(User).where(User.id == 1))
-    user = result.scalar_one()
+    # 获取数据库会话并使用上下文管理器
+    async with await service.get_session() as session:
+        # 执行数据库操作
+        result = await session.execute(select(User).where(User.id == 1))
+        user = result.scalar_one()
 
 finally:
     # 关闭服务
@@ -278,4 +277,4 @@ async with MySQLConnectionService() as service:
 
 ## 示例代码
 
-完整示例请参考：`examples/mysql_connection_service_example.py`
+本文档中的所有代码片段都可以直接使用。请参考"快速开始"和"最佳实践"章节中的示例。

@@ -65,8 +65,8 @@ class MySQLConnectionService:
                 f"MySQL connection service initialized: "
                 f"{config.host}:{config.port}/{config.database}"
             )
-        except SQLAlchemyError as e:
-            logger.error(f"Failed to initialize MySQL connection service: {e}")
+        except SQLAlchemyError:
+            logger.exception("Failed to initialize MySQL connection service")
             raise
 
     def _create_engine(self) -> AsyncEngine:
@@ -126,11 +126,12 @@ class MySQLConnectionService:
                 return
 
             try:
-                await self._engine.dispose()
                 self._is_closed = True
+                await self._engine.dispose()
                 logger.info("MySQL connection service closed")
-            except SQLAlchemyError as e:
-                logger.error(f"Error closing MySQL connection service: {e}")
+            except SQLAlchemyError:
+                self._is_closed = False
+                logger.exception("Error closing MySQL connection service")
                 raise
 
     async def health_check(self) -> HealthStatus:
@@ -161,12 +162,12 @@ class MySQLConnectionService:
                 pool_overflow=pool.overflow(),
                 checked_out=pool.checkedout(),
             )
-        except SQLAlchemyError as e:
-            logger.error(f"Health check failed: {e}")
+        except SQLAlchemyError:
+            logger.exception("Health check failed")
             return HealthStatus(
                 is_healthy=False,
                 message="Database connection is unhealthy",
-                error=str(e),
+                error="Database connection failed",
             )
 
     async def __aenter__(self) -> Self:

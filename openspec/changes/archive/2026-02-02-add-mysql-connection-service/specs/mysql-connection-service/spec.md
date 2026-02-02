@@ -2,7 +2,7 @@
 
 ### Requirement: 连接服务初始化
 
-系统必须提供一个 `MySQLConnectionService` 类，能够通过配置参数初始化 MySQL 数据库连接池。该类应支持异步操作，使用 SQLAlchemy 异步引擎和 pymysql 驱动。
+系统必须提供一个 `MySQLConnectionService` 类，能够通过配置参数初始化 MySQL 数据库连接池。该类应支持异步操作，使用 SQLAlchemy 异步引擎和 aiomysql 驱动。
 
 #### Scenario: 成功初始化连接服务
 
