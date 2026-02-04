@@ -10,7 +10,7 @@ import hashlib
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Literal
+from typing import Callable, Literal, Optional
 
 import httpx
 
@@ -313,7 +313,7 @@ class QwenOAuthClient:
             QwenOAuthError: If the refresh request fails.
 
         """
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
             response = await client.post(
                 QWEN_OAUTH_TOKEN_ENDPOINT,
                 headers={
@@ -351,18 +351,21 @@ class QwenOAuthClient:
 
 
 async def login_qwen_oauth(
-    client: QwenOAuthClient,
-    open_url: callable,
-    note: callable,
-    progress: object,
+    client: Optional[QwenOAuthClient] = None,
+    open_url: Optional[Callable] = None,
+    note: Optional[Callable] = None,
+    progress: Optional[object] = None,
 ) -> QwenOAuthToken:
     """Execute complete Qwen OAuth device code flow.
 
     Args:
-        client: QwenOAuthClient instance.
+        client: QwenOAuthClient instance. If None, creates default instance.
         open_url: Async callable to open verification URL in browser.
+            If None, prints URL to console.
         note: Async callable to display notes to user.
+            If None, uses print statement.
         progress: Progress object with update() and stop() methods.
+            If None, no progress tracking.
 
     Returns:
         QwenOAuthToken upon successful authentication.
@@ -371,6 +374,36 @@ async def login_qwen_oauth(
         QwenOAuthError: If OAuth flow fails or times out.
 
     """
+    # Set up defaults if not provided
+    if client is None:
+        client = QwenOAuthClient()
+
+    if open_url is None:
+        async def _default_open_url(url: str) -> None:
+            print(f"\n请打开以下链接进行认证:\n{url}\n")
+
+        open_url = _default_open_url
+
+    if note is None:
+        async def _default_note(message: str, title: str) -> None:
+            print(f"\n{title}\n{'=' * len(title)}\n{message}\n")
+
+        note = _default_note
+
+    if progress is None:
+        class _DefaultProgress:
+            """默认进度跟踪器."""
+
+            def update(self, message: str) -> None:
+                """更新进度消息."""
+                print(f"  {message}")
+
+            def stop(self, message: str) -> None:
+                """停止进度跟踪."""
+                print(f"  {message}")
+
+        progress = _DefaultProgress()
+
     verifier, challenge = generate_pkce()
     device = await client.get_device_code(challenge)
     verification_url = device.verification_uri_complete or device.verification_uri

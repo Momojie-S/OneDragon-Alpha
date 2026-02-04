@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for QwenOAuthClient.get_device_code method."""
 
-import base64
-from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -12,7 +10,6 @@ from one_dragon_agent.core.model.qwen.oauth import (
     QwenDeviceAuthorization,
     QwenOAuthClient,
     QwenOAuthError,
-    generate_pkce,
 )
 
 
@@ -32,7 +29,7 @@ class TestGetDeviceCode:
         }
 
         with respx.mock:
-            request = respx.post(
+            respx.post(
                 "https://chat.qwen.ai/api/v1/oauth2/device/code"
             ).mock(return_value=httpx.Response(200, json=mock_response))
 

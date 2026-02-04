@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for QwenChatModel class."""
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -26,7 +25,7 @@ class TestQwenChatModelInit:
             with patch(
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ) as mock_parent_init:
-                model = QwenChatModel(model_name="coder-model")
+                _ = QwenChatModel(model_name="coder-model")
 
                 # Verify parent init was called with correct parameters
                 mock_parent_init.assert_called_once()
@@ -49,7 +48,7 @@ class TestQwenChatModelInit:
             with patch(
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ) as mock_parent_init:
-                model = QwenChatModel(model_name="vision-model")
+                _ = QwenChatModel(model_name="vision-model")
 
                 call_kwargs = mock_parent_init.call_args.kwargs
                 assert call_kwargs.get("model_name") == "qwen-portal/vision-model"
@@ -65,7 +64,7 @@ class TestQwenChatModelInit:
             with patch(
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ) as mock_parent_init:
-                model = QwenChatModel(model_name="coder-model")
+                _ = QwenChatModel(model_name="coder-model")
 
                 call_kwargs = mock_parent_init.call_args.kwargs
                 base_url = call_kwargs.get("client_args", {}).get("base_url", "")
@@ -84,7 +83,7 @@ class TestQwenChatModelInit:
             with patch(
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ):
-                model = QwenChatModel(model_name="coder-model")
+                _ = QwenChatModel(model_name="coder-model")
 
                 # Verify get_instance was called
                 mock_manager_class.get_instance.assert_called_once()
@@ -127,7 +126,7 @@ class TestQwenChatModelIntegration:
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ) as mock_parent_init:
                 # Test with model name (no prefix)
-                model1 = QwenChatModel(model_name="coder-model")
+                _ = QwenChatModel(model_name="coder-model")
                 call_kwargs1 = mock_parent_init.call_args.kwargs
 
                 # Model name should have qwen-portal prefix added
@@ -145,7 +144,7 @@ class TestQwenChatModelIntegration:
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ) as mock_parent_init:
                 # Test with model name that already has prefix
-                model = QwenChatModel(model_name="qwen-portal/coder-model")
+                _ = QwenChatModel(model_name="qwen-portal/coder-model")
                 call_kwargs = mock_parent_init.call_args.kwargs
 
                 # Model name should not be double-prefixed

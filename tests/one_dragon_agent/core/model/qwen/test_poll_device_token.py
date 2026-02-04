@@ -7,8 +7,6 @@ import respx
 
 from one_dragon_agent.core.model.qwen.oauth import (
     QwenOAuthClient,
-    QwenOAuthError,
-    QwenOAuthToken,
 )
 
 
@@ -18,7 +16,6 @@ class TestPollDeviceToken:
 
     async def test_poll_device_token_success(self) -> None:
         """Test successful token retrieval."""
-        import time
 
         mock_response = {
             "access_token": "test-access-token-123",

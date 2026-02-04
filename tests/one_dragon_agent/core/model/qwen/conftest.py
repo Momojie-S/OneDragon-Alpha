@@ -58,7 +58,6 @@ def mock_token_response() -> dict:
     Returns:
         A dictionary mimicking the Qwen token API response.
     """
-    import time
 
     return {
         "access_token": "test-access-token-abcdef123456",

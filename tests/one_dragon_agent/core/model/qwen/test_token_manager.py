@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from one_dragon_agent.core.model.qwen.oauth import (
-    QwenOAuthClient,
     QwenOAuthToken,
     QwenRefreshTokenInvalidError,
     QwenTokenNotAvailableError,
@@ -357,7 +356,7 @@ class TestQwenTokenManagerConcurrency:
         refresh_allowed = asyncio.Event()
         refresh_count = 0
 
-        async def slow_refresh(refresh_token: str) -> QwenOAuthToken:
+        async def slow_refresh(_refresh_token: str) -> QwenOAuthToken:
             nonlocal refresh_count
             refresh_count += 1
             refresh_started.set()
@@ -383,8 +382,8 @@ class TestQwenTokenManagerConcurrency:
         refresh_allowed.set()
 
         # Both should complete successfully
-        result1 = await task1
-        result2 = await task2
+        await task1
+        await task2
 
         # Both should get the same new token (from the single refresh)
         # Note: result2 might return test-access-token if it loaded before refresh completed

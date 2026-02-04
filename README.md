@@ -23,7 +23,7 @@
 # 安装依赖
 uv sync --group dev
 
-# 安装 one_dragon_alpha 包
+# 安装 one_dragon_agent 包
 uv pip install -e .
 ```
 
@@ -65,11 +65,11 @@ asyncio.run(main())
 
 ## 项目结构
 
-```
+```text
 OneDragon-Alpha/
-├── src/one_dragon_alpha/      # 源代码
+├── src/one_dragon_agent/      # 源代码
 │   └── core/
-│       ├── agent/             # Agent 相关（包括 Qwen 模型）
+│       ├── model/             # 模型相关（包括 Qwen 模型）
 │       ├── system/            # 系统工具（日志等）
 │       └── ...                # 其他核心模块
 ├── tests/                     # 测试代码
@@ -87,7 +87,7 @@ OneDragon-Alpha/
 uv run --env-file .env pytest tests/
 
 # 运行特定模块测试
-uv run --env-file .env pytest tests/one_dragon_alpha/core/agent/qwen/
+uv run --env-file .env pytest tests/one_dragon_agent/core/model/qwen/
 ```
 
 ### 代码质量检查
