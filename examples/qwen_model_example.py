@@ -66,11 +66,11 @@ async def example_multiple_models():
     print("\n=== 多模型类型示例 ===\n")
 
     # 代码模型
-    coder_model = QwenChatModel(model_name="coder-model")
+    _ = QwenChatModel(model_name="coder-model")
     print("代码模型创建成功")
 
     # 视觉模型（支持图像输入）
-    vision_model = QwenChatModel(model_name="vision-model")
+    _ = QwenChatModel(model_name="vision-model")
     print("视觉模型创建成功")
 
 
@@ -92,7 +92,7 @@ async def example_token_manager():
         return
 
     # 检查 token 是否有效
-    print(f"Token 已自动启动后台刷新任务")
+    print("Token 已自动启动后台刷新任务")
 
 
 async def example_error_handling():

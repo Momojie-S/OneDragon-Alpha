@@ -85,8 +85,13 @@ class QwenChatModel(OpenAIChatModel):
 
             # Get token synchronously
             try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # No running loop, can use asyncio.run directly
+                loop = None
+
+            try:
+                if loop is not None:
                     # Create new loop in thread to get token
                     import concurrent.futures
 
@@ -104,7 +109,7 @@ class QwenChatModel(OpenAIChatModel):
 
                 raise QwenTokenNotAvailableError(
                     f"Failed to get Qwen access token: {e}"
-                )
+                ) from e
 
             # Update the API key in the parent class
             self.api_key = token
