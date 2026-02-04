@@ -36,6 +36,7 @@ class QwenChatModel(OpenAIChatModel):
         model_name: str = "coder-model",
         client_id: str | None = None,
         token_path: str | None = None,
+        stream: bool = False,
     ) -> None:
         """Initialize QwenChatModel.
 
@@ -43,6 +44,7 @@ class QwenChatModel(OpenAIChatModel):
             model_name: Qwen model name (e.g., "coder-model", "vision-model").
             client_id: OAuth client ID (uses default if not provided).
             token_path: Path to store token file (uses default if not provided).
+            stream: Whether to use streaming output. Default is False.
 
         """
         # Get token manager singleton
@@ -50,28 +52,28 @@ class QwenChatModel(OpenAIChatModel):
         self._model_name = model_name
         self._full_model_id = self._get_full_model_id(model_name)
         self._token_initialized = False
+        self._stream = stream
 
         # Initialize parent with a placeholder token
         # The actual token will be loaded when needed
         super().__init__(
             model_name=self._full_model_id,
             api_key="qwen-oauth-placeholder",  # Placeholder
-            client_args={"base_url": "https://portal.qwen.ai/v1"},
+            stream=stream,
+            client_kwargs={"base_url": "https://portal.qwen.ai/v1"},
         )
 
     def _get_full_model_id(self, model_name: str) -> str:
-        """Get full model ID with prefix.
+        """Get full model ID.
 
         Args:
-            model_name: Short model name.
+            model_name: Model name.
 
         Returns:
-            Full model ID (e.g., "qwen-portal/coder-model").
+            Model name as provided.
 
         """
-        if model_name.startswith("qwen-portal/"):
-            return model_name
-        return f"qwen-portal/{model_name}"
+        return model_name
 
     def _ensure_token(self) -> None:
         """Ensure token is loaded and update client if needed.

@@ -31,10 +31,34 @@ async def example_basic_usage():
     # 使用模型
     print("\n3. 调用模型...")
     try:
-        response = model("你好，请用一句话介绍你自己。")
-        print(f"模型回复: {response}")
+        response = await model([{"role": "user", "content": "你好，请用一句话介绍你自己。"}])
+        # response 是一个 ChatResponse 对象，可以通过 .content 或 .text 获取内容
+        print(f"模型回复: {response.content}")
     except Exception as e:
         print(f"模型调用失败: {e}")
+
+
+async def example_stream_usage():
+    """流式输出使用示例."""
+    print("\n=== 流式输出示例 ===\n")
+
+    # 创建支持流式输出的模型实例
+    model = QwenChatModel(model_name="coder-model", stream=True)
+
+    print("开始流式调用...")
+    try:
+        response_stream = await model([
+            {"role": "user", "content": "请用三句话介绍 Python 语言的特点。"}
+        ])
+
+        # 流式响应是一个异步生成器，需要迭代获取
+        print("模型回复（流式）: ", end="", flush=True)
+        async for chunk in response_stream:
+            if chunk.content:
+                print(chunk.content, end="", flush=True)
+        print()  # 换行
+    except Exception as e:
+        print(f"\n流式调用失败: {e}")
 
 
 async def example_multiple_models():
@@ -82,8 +106,8 @@ async def example_error_handling():
 
     try:
         model = QwenChatModel()
-        response = model("Hello!")
-        print(f"响应: {response}")
+        response = await model([{"role": "user", "content": "Hello!"}])
+        print(f"响应: {response.content}")
     except QwenTokenNotAvailableError:
         print("错误: 未找到有效 token")
         print("解决方案: 请先运行 login_qwen_oauth() 进行认证")
@@ -99,6 +123,7 @@ async def main():
     try:
         # 运行各个示例
         await example_basic_usage()
+        await example_stream_usage()
         await example_multiple_models()
         await example_token_manager()
         await example_error_handling()

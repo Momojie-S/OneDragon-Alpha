@@ -31,11 +31,11 @@ class TestQwenChatModelInit:
                 mock_parent_init.assert_called_once()
                 call_kwargs = mock_parent_init.call_args.kwargs
 
-                # Model name should have qwen-portal prefix
-                assert call_kwargs.get("model_name") == "qwen-portal/coder-model"
+                # Model name should be used as provided
+                assert call_kwargs.get("model_name") == "coder-model"
                 # Token is a placeholder
                 assert call_kwargs.get("api_key") == "qwen-oauth-placeholder"
-                assert "portal.qwen.ai" in call_kwargs.get("client_args", {}).get("base_url", "")
+                assert "portal.qwen.ai" in call_kwargs.get("client_kwargs", {}).get("base_url", "")
 
     async def test_init_with_custom_model(self) -> None:
         """Test initialization with custom model name."""
@@ -51,7 +51,7 @@ class TestQwenChatModelInit:
                 _ = QwenChatModel(model_name="vision-model")
 
                 call_kwargs = mock_parent_init.call_args.kwargs
-                assert call_kwargs.get("model_name") == "qwen-portal/vision-model"
+                assert call_kwargs.get("model_name") == "vision-model"
 
     async def test_init_uses_correct_base_url(self) -> None:
         """Test that initialization uses correct Qwen base URL."""
@@ -67,7 +67,7 @@ class TestQwenChatModelInit:
                 _ = QwenChatModel(model_name="coder-model")
 
                 call_kwargs = mock_parent_init.call_args.kwargs
-                base_url = call_kwargs.get("client_args", {}).get("base_url", "")
+                base_url = call_kwargs.get("client_kwargs", {}).get("base_url", "")
 
                 assert "portal.qwen.ai" in base_url
                 assert "/v1" in base_url
@@ -115,7 +115,7 @@ class TestQwenChatModelIntegration:
                     assert model is not None
 
     async def test_model_name_format(self) -> None:
-        """Test that model names are formatted correctly."""
+        """Test that model names are used as provided."""
         with patch(
             "one_dragon_agent.core.model.qwen.qwen_chat_model.QwenTokenManager"
         ) as mock_manager_class:
@@ -125,15 +125,15 @@ class TestQwenChatModelIntegration:
             with patch(
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ) as mock_parent_init:
-                # Test with model name (no prefix)
+                # Test with model name
                 _ = QwenChatModel(model_name="coder-model")
                 call_kwargs1 = mock_parent_init.call_args.kwargs
 
-                # Model name should have qwen-portal prefix added
-                assert call_kwargs1.get("model_name") == "qwen-portal/coder-model"
+                # Model name should be used as provided
+                assert call_kwargs1.get("model_name") == "coder-model"
 
-    async def test_model_name_already_has_prefix(self) -> None:
-        """Test that model names with prefix are not modified."""
+    async def test_different_model_names(self) -> None:
+        """Test that different model names are handled correctly."""
         with patch(
             "one_dragon_agent.core.model.qwen.qwen_chat_model.QwenTokenManager"
         ) as mock_manager_class:
@@ -143,12 +143,12 @@ class TestQwenChatModelIntegration:
             with patch(
                 "one_dragon_agent.core.model.qwen.qwen_chat_model.OpenAIChatModel.__init__"
             ) as mock_parent_init:
-                # Test with model name that already has prefix
-                _ = QwenChatModel(model_name="qwen-portal/coder-model")
+                # Test with different model names
+                _ = QwenChatModel(model_name="qwq-32b-preview")
                 call_kwargs = mock_parent_init.call_args.kwargs
 
-                # Model name should not be double-prefixed
-                assert call_kwargs.get("model_name") == "qwen-portal/coder-model"
+                # Model name should be used as provided
+                assert call_kwargs.get("model_name") == "qwq-32b-preview"
 
 
 @pytest.mark.timeout(10)
