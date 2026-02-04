@@ -11,6 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from typing import Callable, Literal, Optional
+from urllib.parse import urlencode
 
 import httpx
 
@@ -129,10 +130,10 @@ def _to_form_url_encoded(data: dict[str, str]) -> str:
         data: Dictionary of key-value pairs.
 
     Returns:
-        Form URL encoded string.
+        Form URL encoded string with proper percent-encoding.
 
     """
-    return "&".join(f"{key}={value}" for key, value in data.items())
+    return urlencode(data)
 
 
 def generate_pkce() -> tuple[str, str]:

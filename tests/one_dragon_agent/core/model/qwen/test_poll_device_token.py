@@ -146,7 +146,8 @@ class TestPollDeviceToken:
 
             # Check request body contains required parameters
             body = request.calls[0].request.content.decode()
-            assert "grant_type=urn:ietf:params:oauth:grant-type:device_code" in body
+            # urlencode will encode special characters like : as %3A
+            assert "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code" in body
             assert "device_code=test-device-123" in body
             assert "code_verifier=test-verifier-abc" in body
             assert "client_id=" in body
