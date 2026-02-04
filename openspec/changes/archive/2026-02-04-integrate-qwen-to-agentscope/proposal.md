@@ -27,12 +27,12 @@
 ## Impact
 
 ### Affected Code
-- **新增**: `src/one_dragon_agent/core/agent/qwen/` - Qwen 模型相关模块
-- **新增**: `src/one_dragon_agent/core/agent/qwen/qwen_chat_model.py` - QwenChatModel 实现
-- **新增**: `src/one_dragon_agent/core/agent/qwen/oauth.py` - OAuth 认证逻辑
-- **新增**: `src/one_dragon_agent/core/agent/qwen/token_manager.py` - Token 管理器
+- **新增**: `src/one_dragon_agent/core/model/qwen/` - Qwen 模型相关模块
+- **新增**: `src/one_dragon_agent/core/model/qwen/qwen_chat_model.py` - QwenChatModel 实现
+- **新增**: `src/one_dragon_agent/core/model/qwen/oauth.py` - OAuth 认证逻辑
+- **新增**: `src/one_dragon_agent/core/model/qwen/token_manager.py` - Token 管理器
 - **新增**: `src/one_dragon_agent/core/system/log.py` - 日志工具
-- **新增**: `tests/one_dragon_agent/core/agent/qwen/` - Qwen 模型测试
+- **新增**: `tests/one_dragon_agent/core/model/qwen/` - Qwen 模型测试
 - **新增**: `.env.example` - Qwen 配置示例
 
 ### Dependencies

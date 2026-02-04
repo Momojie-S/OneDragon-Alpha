@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from one_dragon_agent.core.agent.qwen.oauth import QwenOAuthToken
-from one_dragon_agent.core.agent.qwen.token_manager import TokenPersistence
+from one_dragon_agent.core.model.qwen.oauth import QwenOAuthToken
+from one_dragon_agent.core.model.qwen.token_manager import TokenPersistence
 
 
 @pytest.mark.timeout(10)

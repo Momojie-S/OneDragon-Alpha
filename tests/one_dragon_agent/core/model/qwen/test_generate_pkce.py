@@ -6,7 +6,7 @@ import hashlib
 
 import pytest
 
-from one_dragon_agent.core.agent.qwen.oauth import generate_pkce
+from one_dragon_agent.core.model.qwen.oauth import generate_pkce
 
 
 class TestGeneratePkce:

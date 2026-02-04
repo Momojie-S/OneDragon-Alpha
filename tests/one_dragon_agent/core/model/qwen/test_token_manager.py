@@ -8,13 +8,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from one_dragon_agent.core.agent.qwen.oauth import (
+from one_dragon_agent.core.model.qwen.oauth import (
     QwenOAuthClient,
     QwenOAuthToken,
     QwenRefreshTokenInvalidError,
     QwenTokenNotAvailableError,
 )
-from one_dragon_agent.core.agent.qwen.token_manager import QwenTokenManager, TokenPersistence
+from one_dragon_agent.core.model.qwen.token_manager import QwenTokenManager, TokenPersistence
 
 
 @pytest.mark.timeout(10)

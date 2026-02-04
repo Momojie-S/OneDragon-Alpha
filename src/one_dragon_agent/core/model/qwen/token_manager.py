@@ -11,7 +11,7 @@ from pathlib import Path
 
 from one_dragon_agent.core.system.log import get_logger
 
-from one_dragon_agent.core.agent.qwen.oauth import (
+from one_dragon_agent.core.model.qwen.oauth import (
     QwenOAuthClient,
     QwenOAuthToken,
     QwenRefreshTokenInvalidError,

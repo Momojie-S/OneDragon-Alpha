@@ -5,7 +5,7 @@ import httpx
 import pytest
 import respx
 
-from one_dragon_agent.core.agent.qwen.oauth import (
+from one_dragon_agent.core.model.qwen.oauth import (
     QwenOAuthClient,
     QwenOAuthError,
     QwenOAuthToken,

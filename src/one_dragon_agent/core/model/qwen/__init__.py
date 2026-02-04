@@ -5,8 +5,8 @@ This module provides Qwen chat model with OAuth 2.0 device code authentication
 and automatic token refresh.
 """
 
-from one_dragon_agent.core.agent.qwen.qwen_chat_model import QwenChatModel
-from one_dragon_agent.core.agent.qwen.oauth import (
+from one_dragon_agent.core.model.qwen.qwen_chat_model import QwenChatModel
+from one_dragon_agent.core.model.qwen.oauth import (
     QwenError,
     QwenOAuthClient,
     QwenDeviceAuthorization,
@@ -18,7 +18,7 @@ from one_dragon_agent.core.agent.qwen.oauth import (
     generate_pkce,
     login_qwen_oauth,
 )
-from one_dragon_agent.core.agent.qwen.token_manager import (
+from one_dragon_agent.core.model.qwen.token_manager import (
     QwenTokenManager,
     TokenPersistence,
 )

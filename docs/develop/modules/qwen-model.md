@@ -41,7 +41,7 @@ Token 管理器，采用单例模式，负责 token 的生命周期管理。
 
 ```python
 import asyncio
-from one_dragon_agent.core.agent.qwen import QwenChatModel, login_qwen_oauth
+from one_dragon_agent.core.model.qwen import QwenChatModel, login_qwen_oauth
 
 async def main():
     # 首次使用需要进行 OAuth 认证
@@ -55,7 +55,7 @@ async def main():
     print(response)
 
     # 关闭 token 管理器
-    from one_dragon_agent.core.agent.qwen import QwenTokenManager
+    from one_dragon_agent.core.model.qwen import QwenTokenManager
     await QwenTokenManager.get_instance().shutdown()
 
 asyncio.run(main())
@@ -71,7 +71,7 @@ asyncio.run(main())
 ### Token 生命周期管理
 
 ```python
-from one_dragon_agent.core.agent.qwen import QwenTokenManager
+from one_dragon_agent.core.model.qwen import QwenTokenManager
 
 # 获取单例实例
 manager = QwenTokenManager.get_instance()
@@ -115,7 +115,7 @@ QwenError
 ### 错误处理示例
 
 ```python
-from one_dragon_agent.core.agent.qwen import (
+from one_dragon_agent.core.model.qwen import (
     QwenTokenNotAvailableError,
     QwenRefreshTokenInvalidError,
 )
@@ -143,7 +143,7 @@ except QwenRefreshTokenInvalidError:
 ### 自定义配置
 
 ```python
-from one_dragon_agent.core.agent.qwen import QwenChatModel
+from one_dragon_agent.core.model.qwen import QwenChatModel
 
 model = QwenChatModel(
     model_name="coder-model",
@@ -158,7 +158,7 @@ model = QwenChatModel(
 
 ```python
 import asyncio
-from one_dragon_agent.core.agent.qwen import QwenChatModel, QwenTokenManager
+from one_dragon_agent.core.model.qwen import QwenChatModel, QwenTokenManager
 
 async def main():
     try:
@@ -176,7 +176,7 @@ asyncio.run(main())
 `QwenTokenManager` 使用单例模式，可以在多个组件间共享：
 
 ```python
-from one_dragon_agent.core.agent.qwen import QwenChatModel, QwenTokenManager
+from one_dragon_agent.core.model.qwen import QwenChatModel, QwenTokenManager
 
 # 在不同地方使用，共享同一个 token 管理器
 model1 = QwenChatModel()
@@ -222,6 +222,6 @@ await QwenTokenManager.get_instance().shutdown()
 
 ## 相关模块
 
-- `one_dragon_agent.core.agent.qwen.qwen_chat_model` - QwenChatModel 实现
-- `one_dragon_agent.core.agent.qwen.oauth` - OAuth 认证逻辑
-- `one_dragon_agent.core.agent.qwen.token_manager` - Token 管理器
+- `one_dragon_agent.core.model.qwen.qwen_chat_model` - QwenChatModel 实现
+- `one_dragon_agent.core.model.qwen.oauth` - OAuth 认证逻辑
+- `one_dragon_agent.core.model.qwen.token_manager` - Token 管理器

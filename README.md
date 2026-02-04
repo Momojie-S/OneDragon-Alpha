@@ -42,7 +42,7 @@ cp .env.example .env
 
 ```python
 import asyncio
-from one_dragon_agent.core.agent.qwen import QwenChatModel, login_qwen_oauth, QwenTokenManager
+from one_dragon_agent.core.model.qwen import QwenChatModel, login_qwen_oauth, QwenTokenManager
 
 async def main():
     # 1. 进行 OAuth 认证

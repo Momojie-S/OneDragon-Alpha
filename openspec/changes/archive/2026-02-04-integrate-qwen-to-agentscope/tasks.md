@@ -109,7 +109,7 @@
 
 ## 5. 测试
 
-- [x] 5.1 创建 `tests/one_dragon_agent/core/agent/qwen/` 目录
+- [x] 5.1 创建 `tests/one_dragon_agent/core/model/qwen/` 目录
 - [x] 5.2 编写 OAuth 流程测试
   - ✅ `test_generate_pkce.py`: 7 个测试
   - ✅ `test_get_device_code.py`: 6 个测试
@@ -123,7 +123,7 @@
   - ✅ `test_qwen_chat_model.py`: 9 个测试
 - [x] 5.5 运行所有测试并确保通过
   - ✅ 总计 60 个测试全部通过
-  - ✅ 命令: `uv run --env-file .env pytest tests/one_dragon_agent/core/agent/qwen/`
+  - ✅ 命令: `uv run --env-file .env pytest tests/one_dragon_agent/core/model/qwen/`
 
 ## 6. 文档
 
@@ -142,10 +142,10 @@
 ## 7. 代码质量
 
 - [x] 7.1 运行 ruff 检查
-  - `uv run ruff check src/one_dragon_agent/core/agent/qwen/`
+  - `uv run ruff check src/one_dragon_agent/core/model/qwen/`
   - 修复所有警告和错误
 - [x] 7.2 运行 ruff 格式化
-  - `uv run ruff format src/one_dragon_agent/core/agent/qwen/`
+  - `uv run ruff format src/one_dragon_agent/core/model/qwen/`
 - [x] 7.3 添加类型提示
   - 确保所有函数签名包含类型提示
   - 使用 `TYPE_CHECKING` 导入类型注解

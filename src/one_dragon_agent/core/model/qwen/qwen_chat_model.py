@@ -9,8 +9,8 @@ from typing import Any
 
 from agentscope.model import OpenAIChatModel
 
-from one_dragon_agent.core.agent.qwen.oauth import QwenError
-from one_dragon_agent.core.agent.qwen.token_manager import QwenTokenManager
+from one_dragon_agent.core.model.qwen.oauth import QwenError
+from one_dragon_agent.core.model.qwen.token_manager import QwenTokenManager
 
 # Export exceptions for convenience
 __all__ = [
@@ -96,7 +96,7 @@ class QwenChatModel(OpenAIChatModel):
                 else:
                     token = asyncio.run(self._token_manager.get_access_token())
             except Exception as e:
-                from one_dragon_agent.core.agent.qwen.oauth import (
+                from one_dragon_agent.core.model.qwen.oauth import (
                     QwenTokenNotAvailableError,
                 )
 

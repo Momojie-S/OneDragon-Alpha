@@ -5,7 +5,7 @@
 """
 
 import asyncio
-from one_dragon_agent.core.agent.qwen import (
+from one_dragon_agent.core.model.qwen import (
     QwenChatModel,
     QwenTokenManager,
     login_qwen_oauth,
@@ -75,7 +75,7 @@ async def example_error_handling():
     """错误处理示例."""
     print("\n=== 错误处理示例 ===\n")
 
-    from one_dragon_agent.core.agent.qwen import (
+    from one_dragon_agent.core.model.qwen import (
         QwenTokenNotAvailableError,
         QwenRefreshTokenInvalidError,
     )
