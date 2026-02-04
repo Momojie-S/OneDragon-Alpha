@@ -184,8 +184,25 @@ class QwenTokenManager:
         return cls._instance
 
     @classmethod
+    async def reset_async(cls) -> None:
+        """Reset singleton instance asynchronously (for testing).
+
+        This method waits for the background refresh task to complete before clearing.
+        """
+        if cls._instance:
+            # Set stop event and wait for task to complete
+            cls._instance._stop_event.set()
+            if cls._instance._refresh_task and not cls._instance._refresh_task.done():
+                await cls._instance._refresh_task
+        cls._instance = None
+
+    @classmethod
     def reset(cls) -> None:
-        """Reset singleton instance (for testing)."""
+        """Reset singleton instance (for testing).
+
+        Note: This is a synchronous method that only sets the stop event.
+        For proper cleanup in tests, use reset_async() instead.
+        """
         if cls._instance:
             # Set stop event and clear instance
             cls._instance._stop_event.set()

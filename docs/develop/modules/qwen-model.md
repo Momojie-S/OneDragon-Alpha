@@ -222,6 +222,6 @@ await QwenTokenManager.get_instance().shutdown()
 
 ## 相关模块
 
-- `one_dragon_alpha.core.agent.qwen.qwen_chat_model` - QwenChatModel 实现
-- `one_dragon_alpha.core.agent.qwen.oauth` - OAuth 认证逻辑
-- `one_dragon_alpha.core.agent.qwen.token_manager` - Token 管理器
+- `one_dragon_agent.core.agent.qwen.qwen_chat_model` - QwenChatModel 实现
+- `one_dragon_agent.core.agent.qwen.oauth` - OAuth 认证逻辑
+- `one_dragon_agent.core.agent.qwen.token_manager` - Token 管理器

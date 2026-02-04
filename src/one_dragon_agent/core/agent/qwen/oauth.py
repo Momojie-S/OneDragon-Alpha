@@ -214,6 +214,7 @@ class QwenOAuthClient:
             not payload.get("device_code")
             or not payload.get("user_code")
             or not payload.get("verification_uri")
+            or not payload.get("expires_in")
         ):
             error = payload.get("error", "Missing required fields in response")
             raise QwenOAuthError(
@@ -312,21 +313,22 @@ class QwenOAuthClient:
             QwenOAuthError: If the refresh request fails.
 
         """
-        response = await httpx.AsyncClient().post(
-            QWEN_OAUTH_TOKEN_ENDPOINT,
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": "application/json",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            },
-            content=_to_form_url_encoded(
-                {
-                    "grant_type": "refresh_token",
-                    "refresh_token": refresh_token,
-                    "client_id": self._client_id,
-                }
-            ),
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                QWEN_OAUTH_TOKEN_ENDPOINT,
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Accept": "application/json",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                },
+                content=_to_form_url_encoded(
+                    {
+                        "grant_type": "refresh_token",
+                        "refresh_token": refresh_token,
+                        "client_id": self._client_id,
+                    }
+                ),
+            )
 
         if response.status_code == 400:
             raise QwenRefreshTokenInvalidError(
@@ -387,9 +389,9 @@ async def login_qwen_oauth(
 
     start_time = time.time()
     poll_interval_ms = device.interval * 1000 if device.interval else 2000
-    timeout_ms = device.expires_in * 1000
+    timeout_sec = device.expires_in
 
-    while time.time() - start_time < timeout_ms:
+    while time.time() - start_time < timeout_sec:
         progress.update("Waiting for Qwen OAuth approval…")
         result = await client.poll_device_token(device.device_code, verifier)
 
