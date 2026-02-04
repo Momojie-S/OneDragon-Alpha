@@ -184,7 +184,7 @@ class QwenOAuthClient:
             QwenOAuthError: If the request fails or returns incomplete response.
 
         """
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
             response = await client.post(
                 QWEN_OAUTH_DEVICE_CODE_ENDPOINT,
                 headers={
