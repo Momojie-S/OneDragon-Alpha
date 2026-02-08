@@ -299,7 +299,7 @@ export class ModelApiService {
         headers: {
           'Content-Type': 'application/json',
         },
-      }
+      },
     )
 
     return this.handleResponse<ModelConfig>(response)
@@ -320,6 +320,21 @@ export class ModelApiService {
     })
 
     return this.handleResponse<TestConnectionResponse>(response)
+  }
+
+  /**
+   * 获取所有已启用的模型配置
+   * @param params 分页和过滤参数
+   * @returns 分页响应，仅包含已启用的配置
+   */
+  async getActiveModelConfigs(
+    params?: Omit<PaginationParams, 'is_active'>,
+  ): Promise<PaginatedResponse<ModelConfig>> {
+    return this.getModelConfigs({
+      ...params,
+      is_active: true,
+      page_size: 100,
+    })
   }
 }
 
@@ -349,10 +364,15 @@ export const getModelConfigs = (params?: PaginationParams) =>
   modelApiService.getModelConfigs(params)
 
 /**
+ * 获取已启用的模型配置列表
+ */
+export const getActiveModelConfigs = (params?: Omit<PaginationParams, 'is_active'>) =>
+  modelApiService.getActiveModelConfigs(params)
+
+/**
  * 获取单个模型配置
  */
-export const getModelConfig = (id: number) =>
-  modelApiService.getModelConfig(id)
+export const getModelConfig = (id: number) => modelApiService.getModelConfig(id)
 
 /**
  * 更新模型配置
@@ -363,8 +383,7 @@ export const updateModelConfig = (id: number, data: UpdateModelConfigRequest) =>
 /**
  * 删除模型配置
  */
-export const deleteModelConfig = (id: number) =>
-  modelApiService.deleteModelConfig(id)
+export const deleteModelConfig = (id: number) => modelApiService.deleteModelConfig(id)
 
 /**
  * 切换配置启用状态
@@ -375,5 +394,4 @@ export const toggleConfigStatus = (id: number, isActive: boolean) =>
 /**
  * 测试 API 连接
  */
-export const testConnection = (data: TestConnectionRequest) =>
-  modelApiService.testConnection(data)
+export const testConnection = (data: TestConnectionRequest) => modelApiService.testConnection(data)

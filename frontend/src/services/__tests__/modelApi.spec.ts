@@ -8,7 +8,7 @@ import type {
   CreateModelConfigRequest,
   UpdateModelConfigRequest,
   ModelConfig,
-  PaginatedResponse
+  PaginatedResponse,
 } from '../modelApi'
 
 // Mock fetch
@@ -31,22 +31,20 @@ describe('ModelApiService', () => {
         provider: 'openai',
         base_url: 'https://api.openai.com',
         api_key: 'sk-test',
-        models: [
-          { model_id: 'gpt-4', support_vision: true, support_thinking: false }
-        ],
-        is_active: true
+        models: [{ model_id: 'gpt-4', support_vision: true, support_thinking: false }],
+        is_active: true,
       }
 
       const mockResponse: ModelConfig = {
         id: 1,
         ...requestData,
         created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z'
+        updated_at: '2025-01-01T00:00:00Z',
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       } as Response)
 
       // When
@@ -60,8 +58,8 @@ describe('ModelApiService', () => {
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestData)
-        })
+          body: JSON.stringify(requestData),
+        }),
       )
     })
 
@@ -72,13 +70,13 @@ describe('ModelApiService', () => {
         provider: 'openai',
         base_url: 'https://api.test.com',
         api_key: 'sk-test',
-        models: [{ model_id: 'test', support_vision: false, support_thinking: false }]
+        models: [{ model_id: 'test', support_vision: false, support_thinking: false }],
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
-        json: async () => ({ message: '配置名称已存在' })
+        json: async () => ({ message: '配置名称已存在' }),
       } as Response)
 
       // When & Then
@@ -102,14 +100,14 @@ describe('ModelApiService', () => {
             models: [{ model_id: 'gpt-4', support_vision: false, support_thinking: false }],
             is_active: true,
             created_at: '2025-01-01T00:00:00Z',
-            updated_at: '2025-01-01T00:00:00Z'
-          }
-        ]
+            updated_at: '2025-01-01T00:00:00Z',
+          },
+        ],
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       } as Response)
 
       // When
@@ -125,7 +123,7 @@ describe('ModelApiService', () => {
       // Given
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ total: 0, page: 1, page_size: 20, items: [] })
+        json: async () => ({ total: 0, page: 1, page_size: 20, items: [] }),
       } as Response)
 
       // When
@@ -133,7 +131,7 @@ describe('ModelApiService', () => {
         page: 2,
         page_size: 50,
         active: true,
-        provider: 'openai'
+        provider: 'openai',
       })
 
       // Then
@@ -156,12 +154,12 @@ describe('ModelApiService', () => {
         models: [{ model_id: 'gpt-4', support_vision: false, support_thinking: false }],
         is_active: true,
         created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z'
+        updated_at: '2025-01-01T00:00:00Z',
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockConfig
+        json: async () => mockConfig,
       } as Response)
 
       // When
@@ -171,7 +169,7 @@ describe('ModelApiService', () => {
       expect(result).toEqual(mockConfig)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/models/configs/1'),
-        expect.any(Object)
+        expect.any(Object),
       )
     })
   })
@@ -181,7 +179,7 @@ describe('ModelApiService', () => {
       // Given
       const updateData: UpdateModelConfigRequest = {
         name: 'Updated Config',
-        is_active: false
+        is_active: false,
       }
 
       const mockResponse: ModelConfig = {
@@ -192,12 +190,12 @@ describe('ModelApiService', () => {
         models: [],
         is_active: false,
         created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T01:00:00Z'
+        updated_at: '2025-01-01T01:00:00Z',
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       } as Response)
 
       // When
@@ -210,8 +208,8 @@ describe('ModelApiService', () => {
         expect.stringContaining('/api/models/configs/1'),
         expect.objectContaining({
           method: 'PUT',
-          body: JSON.stringify(updateData)
-        })
+          body: JSON.stringify(updateData),
+        }),
       )
     })
   })
@@ -221,7 +219,7 @@ describe('ModelApiService', () => {
       // Given
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        status: 204
+        status: 204,
       } as Response)
 
       // When
@@ -231,7 +229,7 @@ describe('ModelApiService', () => {
       expect(result).toBe(true)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/models/configs/1'),
-        expect.objectContaining({ method: 'DELETE' })
+        expect.objectContaining({ method: 'DELETE' }),
       )
     })
 
@@ -240,7 +238,7 @@ describe('ModelApiService', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
-        json: async () => ({ message: '配置不存在' })
+        json: async () => ({ message: '配置不存在' }),
       } as Response)
 
       // When & Then
@@ -259,12 +257,12 @@ describe('ModelApiService', () => {
         models: [],
         is_active: false,
         created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z'
+        updated_at: '2025-01-01T00:00:00Z',
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockConfig
+        json: async () => mockConfig,
       } as Response)
 
       // When
@@ -274,7 +272,7 @@ describe('ModelApiService', () => {
       expect(result.is_active).toBe(false)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/models/configs/1/status?is_active=false'),
-        expect.objectContaining({ method: 'PATCH' })
+        expect.objectContaining({ method: 'PATCH' }),
       )
     })
   })
@@ -284,17 +282,17 @@ describe('ModelApiService', () => {
       // Given
       const requestData = {
         base_url: 'https://api.openai.com',
-        api_key: 'sk-test'
+        api_key: 'sk-test',
       }
 
       const mockResponse = {
         success: true,
-        message: '连接成功'
+        message: '连接成功',
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       } as Response)
 
       // When
@@ -307,8 +305,8 @@ describe('ModelApiService', () => {
         expect.stringContaining('/api/models/configs/test-connection'),
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify(requestData)
-        })
+          body: JSON.stringify(requestData),
+        }),
       )
     })
 
@@ -316,18 +314,18 @@ describe('ModelApiService', () => {
       // Given
       const requestData = {
         base_url: 'https://invalid-url.com',
-        api_key: 'invalid-key'
+        api_key: 'invalid-key',
       }
 
       const mockResponse = {
         success: false,
         message: '无法连接到服务器',
-        raw_error: { error: 'Connection refused' }
+        raw_error: { error: 'Connection refused' },
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       } as Response)
 
       // When

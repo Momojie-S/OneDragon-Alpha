@@ -18,7 +18,7 @@ export const getApiBaseUrl = (): string => {
   const shouldUseMock = USE_MOCK || runtimeMockEnabled
 
   if (shouldUseMock && ALLOW_RUNTIME_MOCK_SWITCH) {
-    return ''  // Vite mock server needs relative URLs without host
+    return '' // Vite mock server needs relative URLs without host
   }
 
   return API_BASE_URL

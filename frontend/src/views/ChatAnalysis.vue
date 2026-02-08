@@ -1,27 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import BubbleListEnhance from '../components/BubbleListEnhance.vue'
+import ModelSelector from '../components/ModelSelector.vue'
 import { Sender } from 'vue-element-plus-x'
 import { chatHttpService } from '../services/chatHttp'
 import { getApiBaseUrl } from '../config/api'
 import axios from 'axios'
 
-import type {
-  BubbleListItemProps,
-  BubbleListProps
-} from 'vue-element-plus-x/types/BubbleList';
-import type { EnhancedMessage } from '../components/BubbleListEnhance.vue';
+import type { EnhancedMessage } from '../components/BubbleListEnhance.vue'
 
 // EnhancedMessage工厂函数
 const createEnhancedMessage = (config: {
-  content: string;
-  role: 'user' | 'assistant';
-  messageType?: 'text' | 'chart';
-  chartData?: any;
-  analyseId?: string;
-  messageId?: string;
-  typing?: boolean | { step: number; interval: number };
-  maxWidth?: string;
+  content: string
+  role: 'user' | 'assistant'
+  messageType?: 'text' | 'chart'
+  chartData?: any
+  analyseId?: string
+  messageId?: string
+  typing?: boolean | { step: number; interval: number }
+  maxWidth?: string
 }): EnhancedMessage => {
   const {
     content,
@@ -31,10 +28,10 @@ const createEnhancedMessage = (config: {
     analyseId,
     messageId,
     typing = false,
-    maxWidth = '100%'
-  } = config;
+    maxWidth = '100%',
+  } = config
 
-  const isUser = role === 'user';
+  const isUser = role === 'user'
   const baseMessage: EnhancedMessage = {
     content,
     role,
@@ -46,21 +43,24 @@ const createEnhancedMessage = (config: {
     analyseId,
     typing,
     maxWidth,
-  };
+  }
 
   // 助手消息的特定属性
   if (role === 'assistant' && messageId) {
-    baseMessage.messageId = messageId;
+    baseMessage.messageId = messageId
   }
 
-  return baseMessage;
-};
+  return baseMessage
+}
 
 const messages = ref<EnhancedMessage[]>([])
 const inputMessage = ref('')
 const isLoading = ref(false)
 const hasError = ref(false)
 // 移除 WebSocket URL，使用 HTTP SSE
+
+// 模型选择相关状态
+const selectedModelConfigId = ref<number | null>(null)
 
 // 索引缓存：消息ID到DisplayMessage索引的映射
 const messageIdToIndex = ref<Record<string, number>>({})
@@ -70,7 +70,6 @@ const senderState = computed(() => {
   if (hasError.value) return 'error'
   return 'default'
 })
-
 
 // 为内容块生成唯一的消息ID
 const generateMessageId = (content: any, contentIndex: number, message: any): string => {
@@ -113,7 +112,7 @@ const handleStatusOrErrorMessage = (data: any) => {
       content: data.message || '请求失败',
       role: 'assistant',
       messageType: 'text',
-      typing: false
+      typing: false,
     })
     messages.value.push(errorMessage)
     updateIndexCache()
@@ -185,7 +184,10 @@ const handleMessageUpdate = (data: any) => {
 
     if (data.type === 'message_update') {
       // message_update：只处理文本内容，不处理tool_use和tool_result
-      if (content.type === 'text' || (content.type === 'tool_use' && content.name === 'generate_response')) {
+      if (
+        content.type === 'text' ||
+        (content.type === 'tool_use' && content.name === 'generate_response')
+      ) {
         toHandle = true
       }
     } else if (data.type === 'message_completed') {
@@ -206,9 +208,11 @@ const handleMessageUpdate = (data: any) => {
       updateExistedMessage(content, messageId, existingMessageIndex)
 
       // 检查是否为display_analyse_by_code_result工具结果，如果是则自动创建数据分析消息
-      if (data.type === 'message_completed' &&
-          content.type === 'tool_result' &&
-          content.name === 'display_analyse_by_code_result') {
+      if (
+        data.type === 'message_completed' &&
+        content.type === 'tool_result' &&
+        content.name === 'display_analyse_by_code_result'
+      ) {
         createAnalyseByCodeResultMessage(content)
       }
     }
@@ -220,7 +224,6 @@ const isContentTypeMessage = (type: string): boolean => {
   return type === 'message_update' || type === 'message_completed'
 }
 
-
 // 解析单个内容项
 const parseContentItem = (content: any, messageId: string): EnhancedMessage => {
   switch (content.type) {
@@ -229,7 +232,7 @@ const parseContentItem = (content: any, messageId: string): EnhancedMessage => {
         content: content.text,
         role: 'assistant',
         messageId,
-        typing: { step: 50, interval: 10 }
+        typing: { step: 50, interval: 10 },
       })
 
     case 'tool_use':
@@ -239,7 +242,7 @@ const parseContentItem = (content: any, messageId: string): EnhancedMessage => {
           content: content.input.response,
           role: 'assistant',
           messageId,
-          typing: { step: 50, interval: 10 }
+          typing: { step: 50, interval: 10 },
         })
       } else {
         // 所有工具调用都显示相同的格式
@@ -247,7 +250,7 @@ const parseContentItem = (content: any, messageId: string): EnhancedMessage => {
           content: `🔧 工具调用: ${content.name}`,
           role: 'assistant',
           messageId,
-          typing: false
+          typing: false,
         })
       }
 
@@ -257,7 +260,7 @@ const parseContentItem = (content: any, messageId: string): EnhancedMessage => {
         content: '✅ 成功',
         role: 'assistant',
         messageId,
-        typing: false
+        typing: false,
       })
 
     default:
@@ -265,7 +268,7 @@ const parseContentItem = (content: any, messageId: string): EnhancedMessage => {
         content: '',
         role: 'assistant',
         messageId,
-        typing: false
+        typing: false,
       })
   }
 }
@@ -317,7 +320,7 @@ const createAnalyseByCodeResultMessage = async (toolResultContent: any) => {
           messageType: 'chart',
           chartData: chartDataList[i],
           messageId: `chart_${analyseId}_${i}`,
-          typing: false
+          typing: false,
         })
         messages.value.push(chartMessage)
       }
@@ -333,14 +336,12 @@ const createAnalyseByCodeResultMessage = async (toolResultContent: any) => {
       role: 'assistant',
       messageId: `error_${Date.now()}`,
       messageType: 'text',
-      typing: false
+      typing: false,
     })
     messages.value.push(errorMessage)
     updateIndexCache()
   }
 }
-
-
 
 // 调用 /chat/get_analyse_by_code_result 接口获取图表数据
 const fetchChartData = async (analyseId: string): Promise<any[]> => {
@@ -352,23 +353,24 @@ const fetchChartData = async (analyseId: string): Promise<any[]> => {
     }
 
     // 动态获取图表 API base URL，支持运行时切换
-      const baseUrl = getApiBaseUrl()
-      const analyseUrl = `${baseUrl}/chat/get_analyse_by_code_result`
-      console.log('Using analyse URL:', analyseUrl)
+    const baseUrl = getApiBaseUrl()
+    const analyseUrl = `${baseUrl}/chat/get_analyse_by_code_result`
+    console.log('Using analyse URL:', analyseUrl)
 
-      const response = await axios.post(analyseUrl, {
+    const response = await axios.post(analyseUrl, {
       session_id: currentSessionId,
-      analyse_id: parseInt(analyseId)
+      analyse_id: parseInt(analyseId),
     })
 
     console.log('Chart API Response:', response.data)
 
     // 处理不同的响应格式
-    const echartsList = response.data?.result?.echarts_list ||
-                        response.data?.echarts_list ||
-                        response.data?.data?.echarts_list ||
-                        response.data?.data ||
-                        []
+    const echartsList =
+      response.data?.result?.echarts_list ||
+      response.data?.echarts_list ||
+      response.data?.data?.echarts_list ||
+      response.data?.data ||
+      []
 
     console.log('Extracted echartsList:', echartsList)
     return echartsList
@@ -378,6 +380,12 @@ const fetchChartData = async (analyseId: string): Promise<any[]> => {
   }
 }
 
+// 处理模型选择变化
+const handleModelChange = (modelId: number) => {
+  selectedModelConfigId.value = modelId
+  // TODO: 未来将选中的模型配置 ID 传递给后端聊天接口
+  console.log('选中的模型配置 ID:', modelId)
+}
 
 // 发送消息
 const sendMessage = () => {
@@ -387,7 +395,7 @@ const sendMessage = () => {
       content: inputMessage.value,
       role: 'user',
       messageType: 'text',
-      typing: false
+      typing: false,
     })
     messages.value.push(userMessage)
 
@@ -401,7 +409,6 @@ const sendMessage = () => {
     inputMessage.value = ''
   }
 }
-
 
 // 注册HTTP SSE事件处理器
 const registerHttpHandlers = () => {
@@ -428,7 +435,6 @@ onMounted(() => {
   registerHttpHandlers()
 })
 
-
 // 组件卸载时清理HTTP SSE
 onUnmounted(() => {
   chatHttpService.disconnect()
@@ -437,6 +443,9 @@ onUnmounted(() => {
 
 <template>
   <div class="chat-container">
+    <!-- 模型选择器 -->
+    <ModelSelector class="model-selector-container" @update:selectedModelId="handleModelChange" />
+
     <div class="chat-content">
       <BubbleListEnhance
         :list="messages"
@@ -476,6 +485,10 @@ onUnmounted(() => {
   margin: auto;
 }
 
+.model-selector-container {
+  margin-bottom: 20px;
+}
+
 .chat-content {
   flex: 1;
   overflow-y: auto;
@@ -486,9 +499,7 @@ onUnmounted(() => {
   padding-bottom: 50px;
 }
 
-
 :deep(.el-bubble-list p) {
   margin: 0;
 }
-
 </style>
