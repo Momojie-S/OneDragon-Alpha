@@ -384,7 +384,7 @@ const fetchChartData = async (analyseId: string): Promise<any[]> => {
 const handleModelChange = (modelId: number) => {
   selectedModelConfigId.value = modelId
   // TODO: 未来将选中的模型配置 ID 传递给后端聊天接口
-  console.log('选中的模型配置 ID:', modelId)
+  // 如需调试，可使用: if (import.meta.env.DEV) console.log('选中的模型配置 ID:', modelId)
 }
 
 // 发送消息

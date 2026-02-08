@@ -60,7 +60,9 @@ const placeholderText = computed(() => {
 const loadSelectedModelId = (): number | null => {
   try {
     const savedId = localStorage.getItem(STORAGE_KEY)
-    return savedId ? parseInt(savedId, 10) : null
+    if (!savedId) return null
+    const parsed = parseInt(savedId, 10)
+    return Number.isNaN(parsed) ? null : parsed
   } catch (err) {
     console.error('读取 localStorage 失败:', err)
     return null
@@ -112,13 +114,16 @@ const fetchModelConfigs = async () => {
       const isValid = modelConfigs.value.some((config) => config.id === savedId)
       if (isValid) {
         selectedModelId.value = savedId
+        emit('update:selectedModelId', savedId)
       } else if (modelConfigs.value.length > 0) {
         // 如果无效，选择第一个可用配置
         selectedModelId.value = modelConfigs.value[0].id
+        emit('update:selectedModelId', modelConfigs.value[0].id)
       }
     } else if (modelConfigs.value.length > 0) {
       // 如果没有保存的选择，选择第一个可用配置
       selectedModelId.value = modelConfigs.value[0].id
+      emit('update:selectedModelId', modelConfigs.value[0].id)
     }
   } catch (err) {
     console.error('获取模型配置失败:', err)
@@ -133,7 +138,7 @@ const fetchModelConfigs = async () => {
  * 处理模型选择变化
  */
 const handleModelChange = (modelId: number) => {
-  if (modelId) {
+  if (modelId != null) {
     saveSelectedModelId(modelId)
     emit('update:selectedModelId', modelId)
   }

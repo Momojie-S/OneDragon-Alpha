@@ -293,6 +293,16 @@ test.describe('Chat 模型选择器', () => {
       const messageList = page.locator('.bubble-list').or(page.locator('.chat-messages'))
       const messageExists = await messageList.count().catch(() => 0)
 
+      // 验证页面内容保持一致（历史消息不受影响）
+      const finalContent = await page.content()
+
+      if (messageExists > 0) {
+        // 如果有消息列表，验证它仍然可见
+        await expect(messageList.first()).toBeVisible()
+        // 验证页面主要内容保持不变
+        expect(finalContent).toContain(initialContent.slice(0, 100))
+      }
+
       if (messageExists > 0) {
         // 如果有消息列表，验证它仍然可见
         await expect(messageList.first()).toBeVisible()

@@ -326,15 +326,33 @@ export class ModelApiService {
    * 获取所有已启用的模型配置
    * @param params 分页和过滤参数
    * @returns 分页响应，仅包含已启用的配置
+   * @description 自动分页获取所有已启用配置，避免 page_size 限制导致数据截断
    */
   async getActiveModelConfigs(
     params?: Omit<PaginationParams, 'is_active'>,
   ): Promise<PaginatedResponse<ModelConfig>> {
-    return this.getModelConfigs({
-      ...params,
-      is_active: true,
-      page_size: 100,
-    })
+    const startPage = params?.page ?? 1
+    const pageSize = params?.page_size ?? 100
+    let page = startPage
+    let total = 0
+    let items: ModelConfig[] = []
+
+    // 循环获取所有页的数据
+    while (true) {
+      const res = await this.getModelConfigs({
+        ...params,
+        is_active: true,
+        page,
+        page_size: pageSize,
+      })
+      if (page === startPage) total = res.total
+      items = items.concat(res.items)
+      // 如果已获取所有数据或当前页无数据，退出循环
+      if (items.length >= total || res.items.length === 0) break
+      page += 1
+    }
+
+    return { total, page: startPage, page_size: pageSize, items }
   }
 }
 

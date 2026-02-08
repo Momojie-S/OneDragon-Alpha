@@ -30,7 +30,7 @@
 - [x] 2.3.3 实现 `saveSelectedModelId(modelId: number)` 函数保存到 localStorage
 - [x] 2.3.4 在组件挂载时调用 `loadSelectedModelId()` 恢复上次选择
 - [x] 2.3.5 验证保存的 ID 是否仍在可用配置列表中
-- [x] 2.3.6 如果保存的 ID 无效或不不存在，默认选择第一个可用配置
+- [x] 2.3.6 如果保存的 ID 无效或不存在，默认选择第一个可用配置
 - [x] 2.3.7 如果没有可用配置，保持 `selectedModelId` 为 `null`
 
 ### 2.4 用户交互处理
