@@ -9,7 +9,7 @@
 - **WHEN** 用户访问模型配置管理页面
 - **THEN** 系统 SHALL 自动加载并显示所有模型配置
 - **AND** 每个配置 SHALL 显示：配置名称、baseUrl、支持的能力标签、模型数量、启用状态
-- **AND** API key SHALL 以脱敏形式显示（如 "deep...***...sk12"）
+- **AND** API key 不显示，后端不返回此字段
 - **AND** 列表 SHALL 按创建时间倒序排列
 
 #### Scenario: 列表操作按钮

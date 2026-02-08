@@ -11,7 +11,7 @@
   - `id`: 主键（BIGINT，自增）
   - `name`: 配置名称（VARCHAR(255)，唯一，非空）
   - `base_url`: API baseUrl（TEXT，非空）
-  - `api_key_encrypted`: 加密后的 API key（TEXT，非空）
+  - `api_key`: 加密后的 API key（TEXT，非空）
   - `models`: 模型列表（JSON，存储模型对象数组）
     - 每个模型对象包含：model_id、support_vision、support_thinking
   - `is_active`: 是否启用（BOOLEAN，默认 true）
@@ -29,7 +29,7 @@
 #### Scenario: 保存新配置
 - **WHEN** 用户创建新的模型配置
 - **THEN** 系统 SHALL 将配置数据插入到 openai_model_configs 表
-- **AND** api_key SHALL 被加密后存储到 api_key_encrypted 字段
+- **AND** api_key SHALL 被加密后存储到 api_key 字段
 - **AND** created_at 和 updated_at SHALL 自动设置为当前时间
 
 #### Scenario: 更新现有配置
@@ -101,9 +101,9 @@
 #### Scenario: API key 加密
 - **WHEN** 存储 API key 到数据库
 - **THEN** 系统 SHALL 使用加密算法（如 AES-256）对 API key 进行加密
-- **AND** 加密后的数据 SHALL 存储在 api_key_encrypted 字段
+- **AND** 加密后的数据 SHALL 存储在 api_key 字段
 
 #### Scenario: API key 解密
 - **WHEN** 从数据库读取 API key 用于实际调用
-- **THEN** 系统 SHALL 解密 api_key_encrypted 字段的数据
+- **THEN** 系统 SHALL 解密 api_key 字段的数据
 - **AND** 解密后的明文 SHALL 仅用于内部调用，不返回给前端

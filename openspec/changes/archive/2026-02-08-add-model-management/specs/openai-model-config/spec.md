@@ -82,7 +82,7 @@
 
 #### Scenario: 脱敏展示 API key
 - **WHEN** 用户查询模型配置列表
-- **THEN** 系统 SHALL 返回脱敏后的 api_key（仅显示前 4 位和后 4 位）
+- **THEN** 系统 不返回 api_key 字段（仅显示前 4 位和后 4 位）
 - **AND** 完整的 api_key SHALL 不被暴露
 
 #### Scenario: 更新时保留原 API key
