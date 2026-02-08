@@ -35,5 +35,12 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url))
       },
     },
+    server: {
+      port: 21002,
+      host: true,
+      strictPort: false,
+      // 允许所有主机访问（开发环境）
+      allowedHosts: ['momojie.online', '.momojie.online', 'localhost', '.localhost', '127.0.0.1'],
+    },
   }
 })

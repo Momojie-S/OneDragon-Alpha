@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from one_dragon_alpha.server.chat.router import router as chat_router
 from one_dragon_alpha.server.context import OneDragonAlphaContext
+from one_dragon_agent.core.model.router import router as model_config_router
 
 
 @asynccontextmanager
@@ -27,9 +28,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# 配置 CORS 允许的源
+allow_origins = [
+    "http://localhost:21002",
+    "http://127.0.0.1:21002",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://momojie.online:21002",
+    "http://momojie.online",
+    "https://momojie.online",
+    "http://api.momojie.online",
+    "https://api.momojie.online",
+]
+if os.getenv("ODA_ENVIRONMENT") == "DEV":
+    allow_origins.append("*")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if os.getenv("ODA_ENVIRONMENT") == "DEV" else ["https://api.onedragonalpha.com"],
+    allow_origins=allow_origins,
     allow_credentials=True,  # 允许跨域请求携带认证信息
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,7 +55,9 @@ app.add_middleware(
 
 # Include API routers
 app.include_router(chat_router)
+app.include_router(model_config_router)
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=8888)
+    port = int(os.getenv("API_PORT", "21003"))
+    uvicorn.run(app, port=port)

@@ -18,6 +18,8 @@ const watchRoute = () => {
     activeTab.value = 'ad-hoc'
   } else if (route.path === '/dev-options') {
     activeTab.value = 'dev-options'
+  } else if (route.path === '/model-management') {
+    activeTab.value = 'model-management'
   }
 }
 
@@ -33,6 +35,8 @@ const handleTabChange = (tab: any) => {
     router.push('/')
   } else if (tabName === 'dev-options') {
     router.push('/dev-options')
+  } else if (tabName === 'model-management') {
+    router.push('/model-management')
   }
 }
 </script>
@@ -42,6 +46,7 @@ const handleTabChange = (tab: any) => {
     <div class="tabs-container">
       <ElTabs v-model="activeTab" @tab-click="handleTabChange" @change="handleTabChange">
         <ElTabPane label="即席分析" name="ad-hoc" />
+        <ElTabPane label="模型配置" name="model-management" />
         <ElTabPane v-if="isDevelopment" label="开发选项" name="dev-options" />
       </ElTabs>
     </div>
