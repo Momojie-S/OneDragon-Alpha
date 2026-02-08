@@ -187,6 +187,22 @@ class ModelConfigUpdate(BaseModel):
             return v
         return v
 
+    @field_validator("api_key")
+    @classmethod
+    def api_key_empty_to_none(cls, v: str | None) -> str | None:
+        """将空字符串转换为 None.
+
+        Args:
+            v: API 密钥
+
+        Returns:
+            验证后的 API 密钥
+        """
+        if v is not None:
+            v = v.strip()
+            return v or None
+        return v
+
 
 class ModelConfigResponse(ModelConfigBase):
     """模型配置响应模型（不包含 api_key）.

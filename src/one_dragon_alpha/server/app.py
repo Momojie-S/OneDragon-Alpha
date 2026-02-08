@@ -42,8 +42,6 @@ allow_origins = [
     "http://api.momojie.online",
     "https://api.momojie.online",
 ]
-if os.getenv("ODA_ENVIRONMENT") == "DEV":
-    allow_origins.append("*")
 
 app.add_middleware(
     CORSMiddleware,

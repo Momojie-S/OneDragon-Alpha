@@ -82,7 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - API Key 在响应中被过滤，不返回给前端
-- 数据库存储加密敏感信息
+- API Key 以明文存储在数据库中（数据库不对外暴露）
+- 前端不可查看已保存的 API Key
 
 ---
 

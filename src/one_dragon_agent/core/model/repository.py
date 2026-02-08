@@ -88,7 +88,7 @@ class ModelConfigORM:
             "provider": config.provider,
             "base_url": config.base_url,
             "api_key": config.api_key,
-            "models": json.dumps([m.model_dump() for m in config.models]),
+            "models": [m.model_dump() for m in config.models],
             "is_active": config.is_active,
         }
 
@@ -279,9 +279,7 @@ class ModelConfigRepository:
         if config_update.api_key is not None:
             update_data["api_key"] = config_update.api_key
         if config_update.models is not None:
-            update_data["models"] = json.dumps(
-                [m.model_dump() for m in config_update.models]
-            )
+            update_data["models"] = [m.model_dump() for m in config_update.models]
         if config_update.is_active is not None:
             update_data["is_active"] = config_update.is_active
 
@@ -291,17 +289,6 @@ class ModelConfigRepository:
 
         update_data["updated_at"] = datetime.now()
 
-        # 检查乐观锁
-        if config_update.updated_at is not None:
-            # 验证 updated_at 是否匹配
-            existing = await self._get_by_id_internal(config_id)
-            if existing.updated_at != config_update.updated_at:
-                msg = (
-                    f"配置已被其他用户修改，请刷新。"
-                    f"当前时间: {existing.updated_at}, 提交时间: {config_update.updated_at}"
-                )
-                raise ValueError(msg)
-
         try:
             stmt = (
                 update(table)
@@ -309,10 +296,25 @@ class ModelConfigRepository:
                 .values(**update_data)
             )
 
+            # 将乐观锁检查移到 WHERE 条件中，使其成为原子操作
+            if config_update.updated_at is not None:
+                stmt = stmt.where(table.c.updated_at == config_update.updated_at)
+
             result = await self._session.execute(stmt)
             await self._session.commit()
 
             if result.rowcount == 0:
+                # 需要区分是记录不存在还是乐观锁冲突
+                if config_update.updated_at is not None:
+                    # 先检查记录是否存在
+                    exists = await self.get_config_by_id(config_id)
+                    if exists is None:
+                        msg = f"配置 ID {config_id} 不存在"
+                        raise ValueError(msg)
+                    # 记录存在但 updated_at 不匹配，说明已被其他用户修改
+                    msg = "配置已被其他用户修改，请刷新。"
+                    raise ValueError(msg)
+                # 没有 updated_at 的情况，说明记录不存在
                 msg = f"配置 ID {config_id} 不存在"
                 raise ValueError(msg)
 

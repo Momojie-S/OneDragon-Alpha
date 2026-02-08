@@ -104,7 +104,7 @@ export interface PaginationParams {
   /** 每页记录数（最大 100） */
   page_size?: number
   /** 是否启用（可选过滤） */
-  active?: boolean
+  is_active?: boolean
   /** 提供商（可选过滤） */
   provider?: string
 }
@@ -213,7 +213,7 @@ export class ModelApiService {
     if (params) {
       if (params.page) queryParams.append('page', String(params.page))
       if (params.page_size) queryParams.append('page_size', String(params.page_size))
-      if (params.active !== undefined) queryParams.append('active', String(params.active))
+      if (params.is_active !== undefined) queryParams.append('is_active', String(params.is_active))
       if (params.provider) queryParams.append('provider', params.provider)
     }
 

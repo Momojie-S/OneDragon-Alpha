@@ -133,7 +133,9 @@ class TestModelConfigORM:
         assert result["base_url"] == "https://api.openai.com"
         assert result["api_key"] == "sk-test123"
         assert "models" in result
-        assert isinstance(result["models"], str)  # JSON 字符串
+        assert isinstance(result["models"], list)  # SQLAlchemy JSON 列接收 Python 列表
+        assert len(result["models"]) == 1
+        assert result["models"][0]["model_id"] == "gpt-4"
 
 
 class TestModelConfigRepository:
