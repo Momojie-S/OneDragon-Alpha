@@ -24,15 +24,30 @@
 - **THEN** 系统 SHALL 返回 422 Unprocessable Entity 状态码
 - **AND** 响应体包含详细的验证错误信息
 
+### Requirement: 测试 API 连接
+系统 SHALL 提供 POST /api/models/configs/test-connection 接口用于测试配置的 API 连接。
+
+#### Scenario: 连接测试成功
+- **WHEN** 用户发送 POST 请求到 /api/models/configs/test-connection
+- **AND** 请求体包含有效的 base_url 和 api_key
+- **THEN** 系统 SHALL 返回 200 OK 状态码
+- **AND** 响应体包含 success: true 和连接测试结果
+
+#### Scenario: 连接测试失败
+- **WHEN** 用户发送 POST 请求到 /api/models/configs/test-connection
+- **AND** 无法连接到指定的 API 端点
+- **THEN** 系统 SHALL 返回 200 OK 状态码
+- **AND** 响应体包含 success: false 和错误详情
+
 ### Requirement: 获取模型配置列表 API
 系统 SHALL 提供 GET /api/models/configs 接口用于获取所有模型配置。
 
 #### Scenario: 成功获取列表
 - **WHEN** 用户发送 GET 请求到 /api/models/configs
 - **THEN** 系统 SHALL 返回 200 OK 状态码
-- **AND** 响应体包含所有模型配置的数组
-- **AND** api_key SHALL 不在响应中返回
-- **AND** 结果 SHALL 按 created_at 倒序排列
+- **AND** 响应体为分页对象，包含 total、page、page_size、items 字段
+- **AND** items 为模型配置数组，api_key 不在响应中返回
+- **AND** items SHALL 按 created_at 倒序排列
 
 #### Scenario: 过滤启用的配置
 - **WHEN** 用户发送 GET 请求到 /api/models/configs?is_active=true
@@ -106,7 +121,7 @@
 #### Scenario: 成功更新配置
 - **WHEN** 用户发送 PUT 请求到 /api/models/configs/{id}
 - **AND** 该 ID 的配置存在
-- **AND** 请求体包含有效的更新数据
+- **AND** 请求体包含有效地更新数据
 - **THEN** 系统 SHALL 返回 200 OK 状态码
 - **AND** 响应体包含更新后的配置信息（api_key 不在响应中返回）
 - **AND** updated_at 字段 SHALL 被更新为当前时间
