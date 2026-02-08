@@ -55,9 +55,9 @@
 - **THEN** 系统 SHALL 返回 400 Bad Request 状态码
 
 #### Scenario: 无效的过滤参数
-- **WHEN** 用户发送 GET 请求到 /api/models/configs?provider=invalid
+- **WHEN** 用户发送 GET 请求到 /api/models/configs?is_active=invalid
 - **THEN** 系统 SHALL 返回 400 Bad Request 状态码
-- **AND** 响应体包含错误信息，提示 provider 参数无效
+- **AND** 响应体包含错误信息，提示 is_active 参数无效
 
 
 ### Requirement: 获取单个模型配置 API

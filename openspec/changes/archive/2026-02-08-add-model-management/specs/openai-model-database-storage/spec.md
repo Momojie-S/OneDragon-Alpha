@@ -97,7 +97,7 @@
 - **THEN** 系统 SHALL 回滚所有已执行的数据库操作
 - **AND** 原有配置数据 SHALL 保持不变
 
-### Requirement: 数据加密
+### Requirement: 数据安全
 系统 SHALL 保护敏感信息的安全。
 
 **注意**: 当前版本中，API key 以明文形式存储在数据库中。安全措施包括:

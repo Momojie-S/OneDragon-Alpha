@@ -51,7 +51,7 @@
 - 一个配置下可包含多个模型，每个模型有不同的能力标识
 - 将模型列表作为 JSON 数组存储在一个字段中，避免了创建额外的关联表
 - 简化了查询逻辑，一次查询即可获取完整的配置信息
-- JSON 字段在 MySQL 5.7+ 中有良好的支持，可以进行 JSON 路径查询
+- JSON 字段在 MySQL 5.7+ 中有良好地支持，可以进行 JSON 路径查询
 - 通用的表设计可以支持多种模型类型（OpenAI、Qwen、未来扩展的其他模型）
 
 **数据表结构**：
@@ -162,7 +162,7 @@ src/one_dragon_agent/core/model/
 - `POST /api/models/configs` - 创建配置
 - `GET /api/models/configs` - 获取配置列表（支持分页和过滤参数）
   - 分页参数：`?page=1&page_size=10`
-  - 过滤参数：`?active=true&provider=openai`
+  - 过滤参数：`?is_active=true&provider=openai`
   - 默认按创建时间倒序排列（最新在前）
 - `GET /api/models/configs/{id}` - 获取单个配置
 - `PUT /api/models/configs/{id}` - 更新配置

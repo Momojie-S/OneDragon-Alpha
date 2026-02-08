@@ -136,13 +136,13 @@
 - **AND** 响应体包含错误信息，提示请求体格式不正确
 
 #### Scenario: Content-Type 验证
-- **WHEN** 用户发送 POST/PUT 请求
+- **WHEN** 用户发送 POST/PUT/PATCH 请求
 - **AND** Content-Type 不是 application/json
 - **THEN** 系统 SHALL 返回 415 Unsupported Media Type 状态码
 
 #### Scenario: 响应格式一致性
 - **WHEN** API 返回成功响应
-- **THEN** Content-Type SHALL 为 application/json
+- **THEN** 除 204 No Content 外，Content-Type SHALL 为 application/json
 - **AND** 响应体 SHALL 使用统一的数据结构
 - **AND** 错误响应 SHALL 包含 code、message、details 字段
 
