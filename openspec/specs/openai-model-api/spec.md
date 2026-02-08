@@ -199,7 +199,7 @@
 - **AND** 响应体包含错误信息，提示请求体格式不正确
 
 #### Scenario: Content-Type 验证
-- **WHEN** 用户发送 POST/PUT 请求
+- **WHEN** 用户发送 POST/PUT/PATCH 请求
 - **AND** Content-Type 不是 application/json
 - **THEN** 系统 SHALL 返回 415 Unsupported Media Type 状态码
 
