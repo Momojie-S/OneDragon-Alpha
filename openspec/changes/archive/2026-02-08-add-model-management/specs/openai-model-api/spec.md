@@ -143,7 +143,7 @@
 #### Scenario: 响应格式一致性
 - **WHEN** API 返回成功响应
 - **THEN** 除 204 No Content 外，Content-Type SHALL 为 application/json
-- **AND** 响应体 SHALL 使用统一的数据结构
+- **AND** 成功响应直接返回数据对象（无额外包装层）
 - **AND** 错误响应 SHALL 包含 code、message、details 字段
 
 ### Requirement: API 错误处理
