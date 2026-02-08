@@ -57,7 +57,7 @@
 #### Scenario: 空列表
 - **WHEN** 数据库中没有任何模型配置
 - **THEN** 系统 SHALL 返回 200 OK 状态码
-- **AND** 响应体包含空数组
+- **AND** 响应体为分页对象，items 为空数组
 
 #### Scenario: 无效的分页参数
 - **WHEN** 用户发送 GET 请求到 /api/models/configs?page_size=200
