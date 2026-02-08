@@ -12,6 +12,14 @@ const router = createRouter({
       path: '/dev-options',
       name: 'dev-options',
       component: () => import('../views/DevOptions.vue')
+    },
+    {
+      path: '/model-management',
+      name: 'model-management',
+      component: () => import('../views/model-management/ModelConfigList.vue'),
+      meta: {
+        title: '模型配置'
+      }
     }
   ],
 })
