@@ -35,7 +35,7 @@
 - **AND** 结果 SHALL 按 created_at 倒序排列
 
 #### Scenario: 过滤启用的配置
-- **WHEN** 用户发送 GET 请求到 /api/models/configs?active=true
+- **WHEN** 用户发送 GET 请求到 /api/models/configs?is_active=true
 - **THEN** 系统 SHALL 仅返回 is_active = true 的配置
 - **AND** 响应体状态码为 200 OK
 
