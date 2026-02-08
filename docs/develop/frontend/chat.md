@@ -277,4 +277,118 @@ Server Message 7 (response_completed) → 整个响应完成
   → 标记所有消息完成，清理消息状态
 
 最终显示：1个文本Message + 1个工具Message
+
+## 模型选择器组件
+
+### 组件概述
+
+`ModelSelector` 是一个独立的 Vue 3 组件，用于在聊天界面中选择 AI 模型配置。
+
+**文件位置**: `frontend/src/components/ModelSelector.vue`
+
+### 功能特性
+
+1. **模型配置展示**
+   - 自动获取所有已启用的模型配置
+   - 显示配置名称和包含的模型数量
+   - 格式：`<配置名称> (<N>个模型)`
+
+2. **状态持久化**
+   - 使用 localStorage 保存用户选择的模型配置
+   - 存储键名：`chat-selected-model-config-id`
+   - 页面刷新后自动恢复上次选择
+
+3. **智能默认选择**
+   - 优先恢复用户上次选择的模型
+   - 如果上次选择无效，默认选择第一个可用模型
+   - 验证保存的模型 ID 是否仍在可用列表中
+
+4. **错误处理**
+   - 网络错误时显示友好提示
+   - 提供重试按钮
+   - 加载状态显示
+
+5. **响应式设计**
+   - 支持移动端显示
+   - 最大宽度 840px，与聊天界面保持一致
+   - 自动截断过长的配置名称（超过 30 字符）
+
+### 组件接口
+
+**Props**:
+```typescript
+interface Props {
+  placeholder?: string  // 占位符文本，默认："请选择模型"
+}
+```
+
+**Emits**:
+```typescript
+interface Emits {
+  (e: 'update:selectedModelId', value: number): void  // 选中模型 ID 变化
+  (e: 'loading', value: boolean): void               // 加载状态
+}
+```
+
+### 使用示例
+
+```vue
+<template>
+  <ModelSelector
+    placeholder="选择 AI 模型"
+    @update:selectedModelId="handleModelChange"
+  />
+</template>
+
+<script setup lang="ts">
+import ModelSelector from '@/components/ModelSelector.vue'
+
+const handleModelChange = (modelId: number) => {
+  console.log('选中的模型配置 ID:', modelId)
+  // TODO: 将模型配置 ID 传递给后端聊天接口
+}
+</script>
+```
+
+### 数据获取
+
+组件通过 `modelApiService.getActiveModelConfigs()` 方法获取已启用的模型配置：
+
+- **API 端点**: `/api/models/configs?is_active=true&page_size=100`
+- **调用时机**: 组件 `onMounted` 生命周期钩子
+- **无缓存策略**: 每次进入页面都重新获取最新数据
+
+### 状态管理
+
+组件内部维护以下响应式状态：
+
+```typescript
+const modelConfigs = ref<ModelConfig[]>([])      // 模型配置列表
+const selectedModelId = ref<number | null>(null) // 当前选中的 ID
+const isLoading = ref<boolean>(false)             // 加载状态
+const error = ref<string | null>(null)            // 错误信息
+```
+
+### 样式定制
+
+组件使用以下 CSS 类名：
+
+- `.model-selector` - 容器
+- `.model-selector-select` - 选择器
+- `.option-text` - 选项文本
+- `.model-selector-error` - 错误提示区域
+- `.error-message` - 错误消息文本
+
+可以通过覆盖这些类名来自定义样式。
+
+### 与 ChatAnalysis 页面的集成
+
+模型选择器已集成到 `ChatAnalysis.vue` 页面中：
+
+- 位置：页面顶部，消息列表上方
+- 布局：居中显示，最大宽度 840px
+- 事件：监听 `@update:selectedModelId` 事件
+
+**注意**: 当前实现仅保存用户选择到组件状态，尚未将选中的模型配置 ID 传递给后端聊天接口。这是为未来功能预留的扩展点。
+
 ```
