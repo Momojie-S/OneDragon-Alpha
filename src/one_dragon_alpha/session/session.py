@@ -96,7 +96,9 @@ class Session:
         except Exception as e:
             print(f"Task failed with exception: {e}")
 
-    async def chat(self, user_input: str) -> AsyncGenerator[SessionMessage, None]:
+    async def chat(
+        self, user_input: str, model_config_id: int, model_id: str
+    ) -> AsyncGenerator[SessionMessage, None]:
         """Process a chat message and yield streaming responses.
 
         This method processes a user input message and yields SessionMessage
@@ -104,6 +106,8 @@ class Session:
 
         Args:
             user_input: The user's message content.
+            model_config_id: Model configuration ID to use.
+            model_id: Model ID within the configuration to use.
 
         Yields:
             SessionMessage objects containing response chunks and completion status.
@@ -128,7 +132,7 @@ class Session:
             yield SessionMessage(
                 msg=Msg(name=self.agent.id, content=str(e), role="system"),
                 message_completed=False,
-                response_completed=True
+                response_completed=True,
             )
 
     async def interrupt(self) -> None:

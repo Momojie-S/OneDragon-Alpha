@@ -1,6 +1,7 @@
+import asyncio
 import json
 import os
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 from agentscope.agent import AgentBase, ReActAgent
 from agentscope.formatter import OpenAIChatFormatter
@@ -19,7 +20,10 @@ from agentscope.tool import (
 from one_dragon_alpha.agent.tushare.tools.basic import tushare_stock_basic_by_name_like
 from one_dragon_alpha.agent.tushare.tools.financial import tushare_income
 from one_dragon_alpha.session.session import Session
+from one_dragon_alpha.session.session_message import SessionMessage
 from one_dragon_alpha.tool.code import execute_python_code_by_path
+from one_dragon_agent.core.model.model_factory import ModelFactory
+from one_dragon_agent.core.model.models import ModelConfigInternal
 
 
 class TushareSession(Session):
@@ -29,9 +33,16 @@ class TushareSession(Session):
         session_id: str,
         memory: MemoryBase,
     ):
+        # 创建占位符模型(不会真正使用,会在首次调用 set_model 时被替换)
+        placeholder_model = OpenAIChatModel(
+            model_name="placeholder",
+            api_key="placeholder",
+            client_args={"base_url": "https://placeholder.com"},
+        )
+
         Session.__init__(
             self,
-            agent=self._get_main_agent(memory),
+            agent=self._get_main_agent(memory, placeholder_model),
             session_id=session_id,
             memory=memory,
         )
@@ -40,7 +51,20 @@ class TushareSession(Session):
         self._analyse_by_code_map: dict[int, AgentBase] = {}
         self._current_analyse_id: int = 0
 
-    def _get_main_agent(self, memory: MemoryBase) -> AgentBase:
+        # 模型配置缓存
+        self._current_model_config_id: int | None = None
+        self._current_model_id: str | None = None
+
+    def _get_main_agent(self, memory: MemoryBase, model) -> AgentBase:
+        """创建主 Agent.
+
+        Args:
+            memory: 记忆对象
+            model: 模型实例
+
+        Returns:
+            AgentBase: Agent 实例
+        """
         toolkit = Toolkit()
 
         toolkit.register_tool_function(tushare_stock_basic_by_name_like)
@@ -51,11 +75,7 @@ class TushareSession(Session):
         agent = ReActAgent(
             name="OneDragon",
             sys_prompt=_MAIN_SYSTEM_PROMPT,
-            model=OpenAIChatModel(
-                model_name=os.getenv("COMMON_MODEL_NAME"),
-                api_key=os.getenv("COMMON_MODEL_API_KEY"),
-                client_args={"base_url": os.getenv("COMMON_MODEL_BASE_URL")},
-            ),
+            model=model,
             memory=memory,
             formatter=OpenAIChatFormatter(),
             toolkit=toolkit,
@@ -63,6 +83,81 @@ class TushareSession(Session):
         )
 
         return agent
+
+    def set_model(self, config: ModelConfigInternal, model_id: str):
+        """设置模型配置并重建主 Agent.
+
+        Args:
+            config: 模型配置对象(包含 api_key)
+            model_id: 要使用的模型 ID
+
+        """
+        # 检查是否需要切换
+        if (self._current_model_config_id == config.id and
+            self._current_model_id == model_id):
+            # 模型未变化，无需重建
+            return
+
+        # 使用 ModelFactory 创建模型
+        model = ModelFactory.create_model(config, model_id)
+
+        # 创建新的主 Agent(复用 _get_main_agent 方法)
+        new_agent = self._get_main_agent(self.memory, model)
+
+        # 替换 Agent
+        self.agent = new_agent
+
+        # 更新缓存
+        self._current_model_config_id = config.id
+        self._current_model_id = model_id
+
+        # 清空分析 Agent 缓存，强制重建
+        self._analyse_by_code_map.clear()
+
+    async def chat(
+        self,
+        user_input: str,
+        model_config_id: int,
+        model_id: str,
+        config: ModelConfigInternal,
+    ) -> AsyncGenerator:
+        """处理聊天消息.
+
+        Args:
+            user_input: 用户消息内容
+            model_config_id: 模型配置 ID
+            model_id: 模型 ID
+            config: 模型配置对象（已验证）
+
+        Yields:
+            SessionMessage 对象
+        """
+        # 检查是否需要切换模型
+        if (self._current_model_config_id != model_config_id or
+            self._current_model_id != model_id):
+            self.set_model(config, model_id)
+
+        # 直接处理聊天消息(不调用父类方法，因为参数不匹配)
+        try:
+            msg = Msg(name="user", content=user_input, role="user")
+            agent_task = asyncio.create_task(self.agent(msg))
+            agent_task.add_done_callback(self._on_response_completed)
+
+            while True:
+                msg = await self._get_chunk()
+                yield msg
+                if msg.response_completed:
+                    break
+
+            if not agent_task.done():
+                await agent_task
+
+        except Exception as e:
+            yield SessionMessage(
+                msg=Msg(name=self.agent.id, content=str(e), role="system"),
+                message_completed=False,
+                response_completed=True,
+            )
 
     async def display_analyse_by_code_result(
         self,
@@ -125,20 +220,18 @@ class TushareSession(Session):
         )
         await toolkit.register_mcp_client(context7)
 
+        # 使用与主 Agent 相同的模型
         agent = ReActAgent(
             name=f"OdaAnalyseByCode{analyse_id}",
             sys_prompt=self._get_analyse_by_code_sys_prompt(analyse_workspace),
-            model=OpenAIChatModel(
-                model_name=os.getenv("COMMON_MODEL_NAME"),
-                api_key=os.getenv("COMMON_MODEL_API_KEY"),
-                client_args={"base_url": os.getenv("COMMON_MODEL_BASE_URL")},
-            ),
+            model=self.agent.model,
             memory=InMemoryMemory(),
             formatter=OpenAIChatFormatter(),
             toolkit=toolkit,
             max_iters=100,
         )
 
+        self._analyse_by_code_map[analyse_id] = agent
         return agent
 
     def _get_analyse_by_code_dir(self, analyse_id: int) -> str:

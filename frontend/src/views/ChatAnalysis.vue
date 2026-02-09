@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import BubbleListEnhance from '../components/BubbleListEnhance.vue'
-import ModelSelector from '../components/ModelSelector.vue'
+import DualModelSelector from '../components/DualModelSelector.vue'
 import { Sender } from 'vue-element-plus-x'
 import { chatHttpService } from '../services/chatHttp'
 import { getApiBaseUrl } from '../config/api'
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 import type { EnhancedMessage } from '../components/BubbleListEnhance.vue'
 
@@ -57,10 +58,10 @@ const messages = ref<EnhancedMessage[]>([])
 const inputMessage = ref('')
 const isLoading = ref(false)
 const hasError = ref(false)
-// 移除 WebSocket URL，使用 HTTP SSE
 
 // 模型选择相关状态
 const selectedModelConfigId = ref<number | null>(null)
+const selectedModelId = ref<string | null>(null)
 
 // 索引缓存：消息ID到DisplayMessage索引的映射
 const messageIdToIndex = ref<Record<string, number>>({})
@@ -381,14 +382,19 @@ const fetchChartData = async (analyseId: string): Promise<any[]> => {
 }
 
 // 处理模型选择变化
-const handleModelChange = (modelId: number) => {
-  selectedModelConfigId.value = modelId
-  // TODO: 未来将选中的模型配置 ID 传递给后端聊天接口
-  // 如需调试，可使用: if (import.meta.env.DEV) console.log('选中的模型配置 ID:', modelId)
+const handleModelChange = (value: { model_config_id: number; model_id: string }) => {
+  selectedModelConfigId.value = value.model_config_id
+  selectedModelId.value = value.model_id
 }
 
 // 发送消息
 const sendMessage = () => {
+  // 验证是否已选择模型
+  if (!selectedModelConfigId.value || !selectedModelId.value) {
+    ElMessage.warning('请先选择模型配置和具体模型')
+    return
+  }
+
   if (inputMessage.value.trim()) {
     // 添加用户消息
     const userMessage = createEnhancedMessage({
@@ -399,8 +405,12 @@ const sendMessage = () => {
     })
     messages.value.push(userMessage)
 
-    // 发送HTTP SSE消息
-    chatHttpService.sendChatMessage(inputMessage.value)
+    // 发送HTTP SSE消息，传递 model_config_id 和 model_id
+    chatHttpService.sendChatMessage(
+      inputMessage.value,
+      selectedModelConfigId.value,
+      selectedModelId.value
+    )
 
     // 设置加载状态
     isLoading.value = true
@@ -443,8 +453,8 @@ onUnmounted(() => {
 
 <template>
   <div class="chat-container">
-    <!-- 模型选择器 -->
-    <ModelSelector class="model-selector-container" @update:selectedModelId="handleModelChange" />
+    <!-- 双层模型选择器 -->
+    <DualModelSelector class="dual-model-selector-container" @change="handleModelChange" />
 
     <div class="chat-content">
       <BubbleListEnhance
@@ -485,7 +495,7 @@ onUnmounted(() => {
   margin: auto;
 }
 
-.model-selector-container {
+.dual-model-selector-container {
   margin-bottom: 20px;
 }
 

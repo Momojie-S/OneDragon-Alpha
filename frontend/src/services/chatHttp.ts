@@ -16,9 +16,16 @@ export class ChatHttpService {
   /**
    * Send a chat message to the server using HTTP POST with SSE streaming
    * @param userInput User's message content
+   * @param modelConfigId Model configuration ID
+   * @param modelId Model ID within the configuration
    * @param sessionId Optional session ID for existing session
    */
-  async sendChatMessage(userInput: string, sessionId?: string): Promise<void> {
+  async sendChatMessage(
+    userInput: string,
+    modelConfigId: number,
+    modelId: string,
+    sessionId?: string
+  ): Promise<void> {
     if (this.abortController) {
       // Cancel any ongoing request
       this.abortController.abort()
@@ -44,6 +51,8 @@ export class ChatHttpService {
         body: JSON.stringify({
           session_id: this.sessionId,
           user_input: userInput,
+          model_config_id: modelConfigId,
+          model_id: modelId,
         }),
         signal: this.abortController.signal,
       })

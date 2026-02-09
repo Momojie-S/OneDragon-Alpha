@@ -220,6 +220,26 @@ class ModelConfigResponse(ModelConfigBase):
     model_config = {"from_attributes": True}
 
 
+class ModelConfigInternal(ModelConfigBase):
+    """模型配置内部响应模型（包含 api_key）.
+
+    此模型仅用于内部服务间调用，不应直接返回给前端。
+
+    Attributes:
+        id: 配置 ID
+        api_key: API 密钥
+        created_at: 创建时间
+        updated_at: 更新时间
+    """
+
+    id: int = Field(..., description="配置 ID")
+    api_key: str = Field(..., description="API 密钥")
+    created_at: datetime = Field(..., description="创建时间")
+    updated_at: datetime = Field(..., description="更新时间")
+
+    model_config = {"from_attributes": True}
+
+
 class PaginatedModelConfigResponse(BaseModel):
     """分页模型配置响应模型.
 

@@ -12,6 +12,7 @@ from one_dragon_agent.core.model.models import (
     ModelConfigCreate,
     ModelConfigUpdate,
     ModelConfigResponse,
+    ModelConfigInternal,
     TestConnectionRequest,
     TestConnectionResponse,
     PaginatedModelConfigResponse,
@@ -90,6 +91,21 @@ class ModelConfigService:
         await self.validate_config_unique(config.name)
 
         return await self._repository.create_config(config)
+
+    async def get_model_config_internal(self, config_id: int) -> ModelConfigInternal:
+        """获取包含 api_key 的完整配置(仅供内部使用).
+
+        Args:
+            config_id: 配置 ID
+
+        Returns:
+            包含 api_key 的内部配置对象
+
+        Raises:
+            ValueError: 如果配置不存在
+        """
+        config = await self._repository.get_config_internal(config_id)
+        return config
 
     async def get_model_config(self, config_id: int) -> ModelConfigResponse:
         """获取单个配置.

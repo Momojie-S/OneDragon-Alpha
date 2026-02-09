@@ -13,6 +13,7 @@ from one_dragon_agent.core.model.models import (
     ModelConfigCreate,
     ModelConfigUpdate,
     ModelConfigResponse,
+    ModelConfigInternal,
 )
 from one_dragon_agent.core.system.log import get_logger
 
@@ -193,6 +194,49 @@ class ModelConfigRepository:
         row_dict = dict(row._mapping)
         config_data = ModelConfigORM.dict_to_orm(row_dict)
         return ModelConfigResponse(**config_data)
+
+    async def get_config_internal(self, config_id: int) -> ModelConfigInternal:
+        """根据 ID 查询配置(包含 api_key,仅供内部使用).
+
+        Args:
+            config_id: 配置 ID
+
+        Returns:
+            包含 api_key 的内部配置对象
+
+        Raises:
+            ValueError: 如果配置不存在
+        """
+        table = model_configs_table
+
+        stmt = select(table).where(table.c.id == config_id)
+        result = await self._session.execute(stmt)
+        row = result.fetchone()
+
+        if not row:
+            msg = f"配置 ID {config_id} 不存在"
+            raise ValueError(msg)
+
+        # 将 SQLAlchemy Row 对象转换为字典
+        row_dict = dict(row._mapping)
+
+        # 解析 JSON 字段
+        models_data = json.loads(row_dict["models"]) if isinstance(row_dict["models"], str) else row_dict["models"]
+
+        # 构建 ModelConfigInternal 所需的字典(包含 api_key)
+        config_data = {
+            "id": row_dict["id"],
+            "name": row_dict["name"],
+            "provider": row_dict["provider"],
+            "base_url": row_dict["base_url"],
+            "api_key": row_dict["api_key"],  # 包含 api_key
+            "models": models_data,
+            "is_active": bool(row_dict["is_active"]),
+            "created_at": row_dict["created_at"],
+            "updated_at": row_dict["updated_at"],
+        }
+
+        return ModelConfigInternal(**config_data)
 
     async def get_configs(
         self,

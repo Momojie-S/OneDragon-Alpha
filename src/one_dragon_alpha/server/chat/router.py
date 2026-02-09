@@ -1,16 +1,47 @@
 import json
 import os
 from enum import StrEnum
-from typing import Any, AsyncGenerator
+from typing import Annotated, Any, AsyncGenerator
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from one_dragon_alpha.server.dependencies import ContextDep
 from one_dragon_alpha.session.session import Session
 
 router = APIRouter(prefix="/chat")
+
+
+async def get_db_session() -> AsyncSession:
+    """获取数据库会话依赖.
+
+    Yields:
+        AsyncSession: 数据库会话
+
+    Raises:
+        HTTPException: 如果无法获取数据库会话
+    """
+    from one_dragon_alpha.services.mysql import MySQLConnectionService
+
+    try:
+        # 获取 MySQL 连接服务实例
+        mysql_service = MySQLConnectionService()
+        async with await mysql_service.get_session() as session:
+            yield session
+    except Exception as e:
+        from one_dragon_agent.core.system.log import get_logger
+
+        logger = get_logger(__name__)
+        logger.error(f"无法获取数据库会话: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="无法连接到数据库",
+        ) from e
+
+
+SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
 class ChatRequest(BaseModel):
@@ -20,9 +51,13 @@ class ChatRequest(BaseModel):
         session_id: Unique identifier for chat session.
                    Optional - if not provided, a new session will be created.
         user_input: The user's message content.
+        model_config_id: Model configuration ID to use for this request.
+        model_id: Model ID within the configuration to use.
     """
     session_id: str | None = None
     user_input: str
+    model_config_id: int
+    model_id: str
 
 
 class GetAnalysisRequest(BaseModel):
@@ -107,7 +142,13 @@ def get_session(context: ContextDep, session_id: str | None) -> tuple[str, Sessi
 
 
 async def stream_response_generator(
-    session_id: str, session: Session, user_input: str, context: ContextDep
+    session_id: str,
+    session: Session,
+    user_input: str,
+    model_config_id: int,
+    model_id: str,
+    config,
+    context: ContextDep,
 ) -> AsyncGenerator[str, None]:
     """Generate streaming response chunks.
 
@@ -118,13 +159,16 @@ async def stream_response_generator(
         session_id: Unique identifier for chat session.
         session: Session instance for processing chat message.
         user_input: The user's message content.
+        model_config_id: Model configuration ID.
+        model_id: Model ID within the configuration.
+        config: Model configuration object.
         context: Dependency context providing services.
 
     Yields:
         SSE-formatted response chunks.
     """
     try:
-        async for session_message in session.chat(user_input):
+        async for session_message in session.chat(user_input, model_config_id, model_id, config):
             response_type = ChatResponseType.RESPONSE_COMPLETED if session_message.response_completed else (
                 ChatResponseType.MESSAGE_COMPLETED if session_message.message_completed else ChatResponseType.MESSAGE_UPDATE
             )
@@ -144,7 +188,7 @@ async def stream_response_generator(
 
 
 @router.post("/stream")
-async def chat_stream(request: ChatRequest, context: ContextDep) -> StreamingResponse:
+async def chat_stream(request: ChatRequest, session: SessionDep, context: ContextDep) -> StreamingResponse:
     """Process a chat message and return streaming response.
 
     This endpoint provides a streaming interface for chat operations.
@@ -152,26 +196,56 @@ async def chat_stream(request: ChatRequest, context: ContextDep) -> StreamingRes
     Note: Each chunk contains complete current message (cumulative).
 
     Args:
-        request: Chat request containing session ID and user input.
+        request: Chat request containing session ID, user input, model_config_id, and model_id.
+        session: Database session for validating model configuration.
         context: Dependency context providing services.
 
     Returns:
         Streaming response with SSE format.
+
+    Raises:
+        HTTPException: If model configuration is invalid or not found.
     """
-    session_id, session = get_session(context, request.session_id)
+    # 导入 ModelConfigService
+    from one_dragon_agent.core.model.service import ModelConfigService
+
+    # 验证模型配置并获取完整配置(包含 api_key)
+    service = ModelConfigService(session)
+    try:
+        config = await service.get_model_config_internal(request.model_config_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+    # 验证配置是否启用
+    if not config.is_active:
+        raise HTTPException(status_code=400, detail=f"模型配置 '{config.name}' 已禁用")
+
+    # 验证 model_id 是否在配置中
+    model_ids = [m.model_id for m in config.models]
+    if request.model_id not in model_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"模型 ID '{request.model_id}' 不在配置 '{config.name}' 中。可用模型: {model_ids}",
+        )
+
+    # 获取或创建 Session
+    session_id, tushare_session = get_session(context, request.session_id)
 
     return StreamingResponse(
         stream_response_generator(
             session_id=session_id,
-            session=session,
+            session=tushare_session,
             user_input=request.user_input,
-            context=context
+            model_config_id=request.model_config_id,
+            model_id=request.model_id,
+            config=config,
+            context=context,
         ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-        }
+        },
     )
 
 
