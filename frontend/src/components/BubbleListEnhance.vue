@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted, watch, onMounted, nextTick } from 'vue'
-import type {
-  BubbleListItemProps,
-  BubbleListProps
-} from 'vue-element-plus-x/types/BubbleList';
-import { BubbleList, Typewriter } from 'vue-element-plus-x';
+import type { BubbleListItemProps, BubbleListProps } from 'vue-element-plus-x/types/BubbleList'
+import { BubbleList, Typewriter } from 'vue-element-plus-x'
 import * as echarts from 'echarts'
 
 // 定义增强的消息类型
@@ -16,8 +13,7 @@ interface EnhancedMessage extends BubbleListItemProps {
 }
 
 // 定义组件属性
-interface BubbleListEnhanceProps extends BubbleListProps<EnhancedMessage> {
-}
+interface BubbleListEnhanceProps extends BubbleListProps<EnhancedMessage> {}
 
 // 定义组件事件
 const emit = defineEmits<{
@@ -26,7 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const props = withDefaults(defineProps<BubbleListEnhanceProps>(), {
-  alwaysShowScrollbar: false
+  alwaysShowScrollbar: false,
 })
 
 const chartContainers = ref<Map<number, HTMLElement>>()
@@ -35,7 +31,6 @@ const bubbleListRef = ref<InstanceType<typeof BubbleList>>()
 const isMounted = ref(true)
 const isResizing = ref(false)
 const previousWidth = ref<number>(0)
-
 
 const getContainerParent = (container: HTMLElement): HTMLElement | null => {
   // 找到上层的 el-bubble-content-wrapper 元素
@@ -58,7 +53,7 @@ const getContainerParent = (container: HTMLElement): HTMLElement | null => {
  */
 const adjustContainerWidth = async (container: HTMLElement): Promise<boolean> => {
   // 找到上层的 el-bubble-content-wrapper 元素
-  let parentWrapper: HTMLElement | null = getContainerParent(container)
+  const parentWrapper: HTMLElement | null = getContainerParent(container)
 
   if (!parentWrapper) {
     console.error('Failed to find parent wrapper element', container)
@@ -77,8 +72,6 @@ const adjustContainerWidth = async (container: HTMLElement): Promise<boolean> =>
 
   return true
 }
-
-
 
 /**
  * 初始化 ECharts 图表
@@ -117,7 +110,7 @@ const initChart = async (index: number, container: HTMLElement, chartData: any) 
     chartInstances.value.set(index, chart)
 
     // 等待ResizeObserver处理完所有事件
-    await new Promise(resolve => setTimeout(resolve, 200))
+    await new Promise((resolve) => setTimeout(resolve, 200))
 
     return chart
   } catch (error) {
@@ -199,7 +192,9 @@ const setupResizeObserver = () => {
       bubbleListResizeTimer = setTimeout(() => {
         console.log(`Bubble list width changed: ${previousWidth.value} -> ${width}`)
         if (isMounted.value && chartInstances.value?.size > 0) {
-          resizeAllCharts(width).catch(error => { console.error('Failed to resize charts:', error) })
+          resizeAllCharts(width).catch((error) => {
+            console.error('Failed to resize charts:', error)
+          })
         }
       }, 1000)
     }
@@ -214,8 +209,6 @@ onMounted(() => {
     setupResizeObserver()
   })
 })
-
-
 
 /**
  * 调整所有图表容器的宽度并重新调整图表大小
@@ -247,7 +240,6 @@ const resizeAllCharts = async (newWidth?: number) => {
 
         // 调用图表的resize方法
         chart.resize()
-
       } catch (error) {
         console.error(`Failed to resize chart ${index}:`, error)
       }
@@ -259,8 +251,7 @@ const resizeAllCharts = async (newWidth?: number) => {
     }
 
     // 等待ResizeObserver处理完所有事件
-    await new Promise(resolve => setTimeout(resolve, 200))
-
+    await new Promise((resolve) => setTimeout(resolve, 200))
   } catch (error) {
     console.error('Failed to resize all charts:', error)
   } finally {
@@ -268,8 +259,6 @@ const resizeAllCharts = async (newWidth?: number) => {
     isResizing.value = false
   }
 }
-
-
 
 watch(
   () => props.list,
@@ -293,15 +282,14 @@ watch(
             continue
           }
 
-          initChart(index, containers[0] as HTMLElement, item.chartData)
-            .catch(error => {
-              console.error(`Failed to initialize chart for index ${index}:`, error)
-            })
+          initChart(index, containers[0] as HTMLElement, item.chartData).catch((error) => {
+            console.error(`Failed to initialize chart for index ${index}:`, error)
+          })
         }
       }
     })
   },
-  { deep: true, immediate: true }
+  { deep: true, immediate: true },
 )
 </script>
 
@@ -321,10 +309,14 @@ watch(
     <template #avatar="{ item }">
       <div class="avatar-wrapper">
         <img
-          :src="item.role === 'assistant' ? 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png' : 'https://avatars.githubusercontent.com/u/76239030?v=4'"
+          :src="
+            item.role === 'assistant'
+              ? 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+              : 'https://avatars.githubusercontent.com/u/76239030?v=4'
+          "
           :alt="item.role === 'assistant' ? 'AI' : 'User'"
           class="avatar-image"
-        >
+        />
       </div>
     </template>
 
@@ -346,23 +338,17 @@ watch(
           />
         </div>
 
-        <div
-          v-else-if="item.messageType === 'chart'"
-          class="content-chart"
-        ></div>
+        <div v-else-if="item.messageType === 'chart'" class="content-chart"></div>
       </div>
     </template>
 
-    <template #footer="{ item }">
-    </template>
+    <template #footer="{ item }"> </template>
 
-    <template #loading="{ item }">
-    </template>
+    <template #loading="{ item }"> </template>
   </BubbleList>
 </template>
 
 <style scoped lang="less">
-
 .avatar-wrapper {
   .avatar-image {
     width: 32px;

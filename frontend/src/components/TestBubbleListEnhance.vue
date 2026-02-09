@@ -41,23 +41,25 @@ const messages = ref<TestMessage[]>([])
 const sampleChartData = {
   title: {
     text: '销售趋势',
-    left: 'center'
+    left: 'center',
   },
   tooltip: {
-    trigger: 'axis'
+    trigger: 'axis',
   },
   xAxis: {
     type: 'category',
-    data: ['1月', '2月', '3月', '4月', '5月', '6月']
+    data: ['1月', '2月', '3月', '4月', '5月', '6月'],
   },
   yAxis: {
-    type: 'value'
+    type: 'value',
   },
-  series: [{
-    data: [150, 230, 224, 218, 135, 147],
-    type: 'line',
-    smooth: true
-  }]
+  series: [
+    {
+      data: [150, 230, 224, 218, 135, 147],
+      type: 'line',
+      smooth: true,
+    },
+  ],
 }
 
 // 添加文本消息
@@ -71,7 +73,7 @@ const addTextMessage = () => {
     messageType: 'text',
     isMarkdown: !isUser,
     typing: !isUser ? { step: 50, interval: 10 } : false,
-    maxWidth: "100%"
+    maxWidth: '100%',
   })
 }
 
@@ -84,7 +86,7 @@ const addChartMessage = () => {
     variant: 'outlined',
     messageType: 'chart',
     chartData: sampleChartData,
-    maxWidth: "100%"
+    maxWidth: '100%',
   })
 }
 
