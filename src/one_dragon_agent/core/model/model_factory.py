@@ -64,7 +64,7 @@ class ModelFactory:
         return OpenAIChatModel(
             model_name=model_id,
             api_key=config.api_key,
-            client_args={"base_url": config.base_url},
+            client_kwargs={"base_url": config.base_url},
         )
 
     @staticmethod

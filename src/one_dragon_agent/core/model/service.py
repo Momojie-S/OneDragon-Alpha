@@ -220,7 +220,7 @@ class ModelConfigService:
     async def test_connection(request: TestConnectionRequest) -> TestConnectionResponse:
         """测试 API 连接.
 
-        使用 AgentScope Model 发送一个简单的聊天请求来验证连接。
+        使用 AgentScope Agent 发送一个简单的聊天请求来验证连接。
 
         Args:
             request: 测试连接请求
@@ -229,7 +229,11 @@ class ModelConfigService:
             测试连接响应
         """
         from one_dragon_agent.core.model.model_factory import ModelFactory
-        from one_dragon_agent.core.model.models import ModelConfigInternal
+        from one_dragon_agent.core.model.models import ModelConfigInternal, ModelInfo
+        from agentscope.agent import ReActAgent
+        from agentscope.formatter import OpenAIChatFormatter
+        from agentscope.memory import InMemoryMemory
+        from agentscope.message import Msg
 
         # 构造临时的 ModelConfigInternal 对象
         temp_config = ModelConfigInternal(
@@ -238,7 +242,13 @@ class ModelConfigService:
             provider="openai",
             base_url=request.base_url,
             api_key=request.api_key,
-            models=[],
+            models=[
+                ModelInfo(
+                    model_id=request.model_id,
+                    support_vision=False,
+                    support_thinking=False,
+                )
+            ],
             is_active=True,
             created_at=datetime.now(),
             updated_at=datetime.now(),
@@ -248,17 +258,26 @@ class ModelConfigService:
             # 使用 ModelFactory 创建模型实例
             model = ModelFactory.create_model(temp_config, request.model_id)
 
-            # 使用 AgentScope 的模型进行测试调用
-            from agentscope.message import Msg
+            # 创建一个简单的 Agent 用于测试
+            agent = ReActAgent(
+                name="TestConnection",
+                sys_prompt="You are a helpful assistant.",
+                model=model,
+                formatter=OpenAIChatFormatter(),
+                memory=InMemoryMemory(),
+            )
+
+            # 禁用 agent 的控制台输出
+            agent.set_console_output_enabled(False)
 
             # 创建测试消息
             test_msg = Msg(name="user", content="hi", role="user")
 
-            # 调用模型
-            response = await model(test_msg)
+            # 调用 agent
+            response = await agent(test_msg)
 
             # 提取响应内容
-            content = response.content if hasattr(response, 'content') else str(response)
+            content = response.get_text_content() if hasattr(response, 'get_text_content') else str(response)
             content_preview = content[:50] if content else ""
 
             return TestConnectionResponse(
@@ -271,7 +290,7 @@ class ModelConfigService:
 
             # 尝试识别错误类型
             error_str = str(e).lower()
-            if "401" in error_str or "unauthorized" in error_str or "api key" in error_str:
+            if "401" in error_str or "unauthorized" in error_str or "api key" in error_str or "incorrect" in error_str:
                 return TestConnectionResponse(
                     success=False,
                     message="API Key 无效或已过期",
