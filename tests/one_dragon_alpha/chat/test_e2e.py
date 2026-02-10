@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""TushareSession 端到端测试.
+"""ChatSession 端到端测试.
 
 这些测试使用真实的数据库和真实的 AI 模型 API 调用，
-验证 TushareSession 类的完整功能。
+验证 ChatSession 类的完整功能。
 """
 
 import os
@@ -18,7 +18,7 @@ from one_dragon_agent.core.model.models import (
 )
 from one_dragon_agent.core.model.service import ModelConfigService
 from one_dragon_agent.core.system.log import get_logger
-from one_dragon_alpha.agent.tushare.tushare_session import TushareSession
+from one_dragon_alpha.chat.chat_session import ChatSession
 from agentscope.memory import InMemoryMemory
 
 logger = get_logger(__name__)
@@ -140,7 +140,7 @@ async def test_create_session_and_send_chat_request(test_configs):
     """测试场景: 创建 session 并发送聊天请求.
 
     验证:
-    1. 可以成功创建 TushareSession 实例
+    1. 可以成功创建 ChatSession 实例
     2. 可以使用模型配置发送聊天请求
     3. 能够接收到 AI 的响应
 
@@ -151,8 +151,8 @@ async def test_create_session_and_send_chat_request(test_configs):
     session_id = "test_session_e2e_001"
     memory = InMemoryMemory()
 
-    # 创建 TushareSession
-    session = TushareSession(
+    # 创建 ChatSession
+    session = ChatSession(
         session_id=session_id,
         memory=memory,
     )
@@ -209,7 +209,7 @@ async def test_same_config_reuse_agent(test_configs):
     session_id = "test_session_e2e_002"
     memory = InMemoryMemory()
 
-    session = TushareSession(
+    session = ChatSession(
         session_id=session_id,
         memory=memory,
     )
@@ -267,7 +267,7 @@ async def test_different_config_rebuild_agent(test_configs):
     session_id = "test_session_e2e_003"
     memory = InMemoryMemory()
 
-    session = TushareSession(
+    session = ChatSession(
         session_id=session_id,
         memory=memory,
     )
@@ -354,7 +354,7 @@ async def test_different_model_id_rebuild_agent(test_configs):
     # 获取更新后的完整内部配置
     updated_config = await service.get_model_config_internal(config1.id)
 
-    session = TushareSession(
+    session = ChatSession(
         session_id=session_id,
         memory=memory,
     )
@@ -409,7 +409,7 @@ async def test_switch_model_clears_analyse_cache(test_configs):
     session_id = "test_session_e2e_005"
     memory = InMemoryMemory()
 
-    session = TushareSession(
+    session = ChatSession(
         session_id=session_id,
         memory=memory,
     )

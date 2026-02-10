@@ -24,7 +24,7 @@ from one_dragon_agent.core.model.model_factory import ModelFactory
 from one_dragon_agent.core.model.models import ModelConfigInternal
 
 
-class TushareSession(Session):
+class ChatSession(Session):
     def __init__(
         self,
         session_id: str,

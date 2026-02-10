@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""TushareSession 单元测试.
+"""ChatSession 单元测试.
 
-这些测试使用 Mock 来验证 TushareSession 的模型切换逻辑，
+这些测试使用 Mock 来验证 ChatSession 的模型切换逻辑，
 不涉及真实的数据库连接或 AI 模型 API 调用。
 """
 
@@ -15,7 +15,7 @@ from agentscope.memory import InMemoryMemory
 from agentscope.model import OpenAIChatModel
 
 from one_dragon_agent.core.model.models import ModelConfigInternal, ModelInfo
-from one_dragon_alpha.agent.tushare.tushare_session import TushareSession
+from one_dragon_alpha.chat.chat_session import ChatSession
 
 
 # ============================================================================
@@ -62,7 +62,7 @@ def mock_config_2():
 
 @pytest.fixture
 def tushare_session():
-    """创建 TushareSession 实例."""
+    """创建 ChatSession 实例."""
     # 设置临时 WORKSPACE_DIR
     old_workspace = os.environ.get("WORKSPACE_DIR")
     os.environ["WORKSPACE_DIR"] = "/tmp/test_workspace"
@@ -70,7 +70,7 @@ def tushare_session():
 
     memory = InMemoryMemory()
     session_id = "test_session_001"
-    session = TushareSession(session_id=session_id, memory=memory)
+    session = ChatSession(session_id=session_id, memory=memory)
 
     yield session
 

@@ -3,7 +3,7 @@ from typing import Optional
 import shortuuid
 from agentscope.memory import InMemoryMemory, MemoryBase
 
-from one_dragon_alpha.agent.tushare.tushare_session import TushareSession
+from one_dragon_alpha.chat.chat_session import ChatSession
 from one_dragon_alpha.session.session import Session
 
 
@@ -37,7 +37,7 @@ class SessionService:
         memory = InMemoryMemory()
         self._memory_cache[session_id] = memory
 
-        session = TushareSession(session_id, memory)
+        session = ChatSession(session_id, memory)
         self._session_cache[session_id] = session
         return session_id
 

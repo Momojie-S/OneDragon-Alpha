@@ -153,7 +153,7 @@
 
 ### Requirement: 分析 Agent 必须使用与主 Agent 相同的模型配置和模型 ID
 
-当 `TushareSession` 创建分析 Agent（用于 `analyse_by_code` 工具）时，必须使用与主 Agent 相同的模型配置和模型 ID。
+当 `ChatSession` 创建分析 Agent（用于 `analyse_by_code` 工具）时，必须使用与主 Agent 相同的模型配置和模型 ID。
 
 **Rationale**: 保持会话的一致性，确保主对话和代码分析使用相同的模型能力。
 
@@ -175,7 +175,7 @@ Session 必须在实例级别维护当前的 `model_config_id`、`model_id` 和�
 
 #### Scenario: Session 初始化
 
-- **WHEN** 创建新的 `TushareSession` 实例
+- **WHEN** 创建新的 `ChatSession` 实例
 - **THEN** 系统必须初始化 `_current_model_config_id` 为 `None`
 - **AND** 系统必须初始化 `_current_model_id` 为 `None`
 - **AND** 系统必须初始化 `_current_agent` 为 `None`

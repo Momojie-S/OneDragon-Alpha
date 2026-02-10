@@ -14,7 +14,6 @@ wheels/
 
 # Agent
 .claude/
-CLAUDE.md
 
 # Development temp files
 .temp/

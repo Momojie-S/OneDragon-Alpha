@@ -297,10 +297,10 @@ model = ModelFactory.create_model(config, "qwen-max")
 
 ### 使用场景
 
-#### 在 TushareSession 中使用
+#### 在 ChatSession 中使用
 
 ```python
-class TushareSession(Session):
+class ChatSession(Session):
     async def _switch_model(self, model_config_id: int, model_id: str):
         # 从数据库获取配置
         config = await self._model_config_service.get_model_config_internal(model_config_id)
@@ -328,11 +328,11 @@ uv run --env-file .env pytest tests/one_dragon_agent/core/model/model_factory/
 
 ---
 
-## TushareSession - 模型切换机制
+## ChatSession - 模型切换机制
 
 ### 概述
 
-`TushareSession` 实现了动态模型切换功能，允许在同一会话中使用不同的模型配置和模型 ID。系统会智能地复用或重建 Agent，避免不必要的性能开销。
+`ChatSession` 实现了动态模型切换功能，允许在同一会话中使用不同的模型配置和模型 ID。系统会智能地复用或重建 Agent，避免不必要的性能开销。
 
 ### 核心方法
 
@@ -491,7 +491,7 @@ async for msg in session.chat(..., model_config_id=1, model_id="gpt-4"):
 
 ### 测试
 
-运行 TushareSession 单元测试：
+运行 ChatSession 单元测试：
 
 ```bash
 # 单元测试（使用 Mock）
