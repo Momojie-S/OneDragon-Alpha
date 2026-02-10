@@ -92,10 +92,14 @@ test.describe('Chat 模型选择器', () => {
 
     // 获取第一个可用配置选项（排除集成测试配置）
     const options = await page.locator('.el-select-dropdown .el-select-dropdown__item').all()
-    const validOption = options.find(async (opt) => {
+    let validOption = null
+    for (const opt of options) {
       const text = await opt.textContent()
-      return text && !text.includes('Integration Test') && text.includes('models')
-    })
+      if (text && !text.includes('Integration Test') && text.includes('models')) {
+        validOption = opt
+        break
+      }
+    }
 
     if (!validOption) {
       test.skip()
@@ -153,10 +157,14 @@ test.describe('Chat 模型选择器', () => {
     await page.waitForTimeout(500) // 等待下拉框动画完成
 
     const configOptions = await page.locator('.el-select-dropdown .el-select-dropdown__item').all()
-    const validConfigOption = configOptions.find(async (opt) => {
+    let validConfigOption = null
+    for (const opt of configOptions) {
       const text = await opt.textContent()
-      return text && !text.includes('Integration Test') && text.includes('models')
-    })
+      if (text && !text.includes('Integration Test') && text.includes('models')) {
+        validConfigOption = opt
+        break
+      }
+    }
 
     if (!validConfigOption) {
       test.skip()
@@ -404,10 +412,14 @@ test.describe('Chat 模型选择器', () => {
     await page.waitForTimeout(500) // 等待下拉框动画完成
 
     const configOptions = await page.locator('.el-select-dropdown .el-select-dropdown__item').all()
-    const validConfigOption = configOptions.find(async (opt) => {
+    let validConfigOption = null
+    for (const opt of configOptions) {
       const text = await opt.textContent()
-      return text && !text.includes('Integration Test') && text.includes('models')
-    })
+      if (text && !text.includes('Integration Test') && text.includes('models')) {
+        validConfigOption = opt
+        break
+      }
+    }
 
     if (!validConfigOption) {
       test.skip()

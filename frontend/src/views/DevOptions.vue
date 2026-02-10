@@ -185,11 +185,15 @@ const handleMockChange = (enabled: boolean) => {
 // 检查 API 状态
 const checkApiStatus = async () => {
   checkingApi.value = true
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 5000)
+
   try {
     const response = await fetch(`${apiUrl.value}/chat/stream`, {
       method: 'OPTIONS',
-      timeout: 5000,
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId)
 
     if (response.ok || response.status === 405) {
       apiStatus.value = 'success'
@@ -205,12 +209,21 @@ const checkApiStatus = async () => {
       })
     }
   } catch (error) {
-    apiStatus.value = 'error'
-    ElMessage({
-      message: 'API 连接失败：' + error.message,
-      type: 'error',
-    })
+    if (error.name === 'AbortError') {
+      apiStatus.value = 'error'
+      ElMessage({
+        message: 'API 连接超时',
+        type: 'error',
+      })
+    } else {
+      apiStatus.value = 'error'
+      ElMessage({
+        message: 'API 连接失败：' + error.message,
+        type: 'error',
+      })
+    }
   } finally {
+    clearTimeout(timeoutId)
     checkingApi.value = false
   }
 }

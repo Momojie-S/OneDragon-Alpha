@@ -336,7 +336,7 @@ uv run --env-file .env pytest tests/one_dragon_agent/core/model/model_factory/
 
 ### 核心方法
 
-#### `chat(user_input, model_config_id, model_id, config=None)`
+#### `chat(user_input, model_config_id, model_id, config)`
 
 发送聊天消息，支持动态模型切换。
 
@@ -344,7 +344,7 @@ uv run --env-file .env pytest tests/one_dragon_agent/core/model/model_factory/
 - `user_input`: 用户输入文本
 - `model_config_id`: 模型配置 ID
 - `model_id`: 模型 ID（必须在配置的 models 数组中）
-- `config`: 可选，模型配置对象（如果提供则跳过数据库查询）
+- `config`: 模型配置对象（`ModelConfigInternal` 类型，由路由层验证后传入）
 
 **返回：**
 - 异步生成器，产生 `SessionMessage` 对象

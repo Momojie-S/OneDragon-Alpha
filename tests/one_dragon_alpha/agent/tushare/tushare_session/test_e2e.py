@@ -330,29 +330,33 @@ async def test_different_model_id_rebuild_agent(test_configs):
     session_id = "test_session_e2e_004"
     memory = InMemoryMemory()
 
+    # 保存 config1 的原始 models 以便测试后恢复
+    original_config1_models = config1.models.copy()
+
     # 先更新 config1 添加第二个模型（两个模型使用相同的 API）
     from one_dragon_agent.core.model.models import ModelConfigUpdate
 
-    await service.update_model_config(
-        config1.id,
-        ModelConfigUpdate(
-            models=[
-                ModelInfo(
-                    model_id="moonshotai/Kimi-K2.5",
-                    support_vision=False,
-                    support_thinking=False,
-                ),
-                ModelInfo(
-                    model_id="Qwen/Qwen2.5-72B-Instruct",
-                    support_vision=False,
-                    support_thinking=False,
-                ),
-            ],
-        ),
-    )
+    try:
+        await service.update_model_config(
+            config1.id,
+            ModelConfigUpdate(
+                models=[
+                    ModelInfo(
+                        model_id="moonshotai/Kimi-K2.5",
+                        support_vision=False,
+                        support_thinking=False,
+                    ),
+                    ModelInfo(
+                        model_id="Qwen/Qwen2.5-72B-Instruct",
+                        support_vision=False,
+                        support_thinking=False,
+                    ),
+                ],
+            ),
+        )
 
-    # 获取更新后的完整内部配置
-    updated_config = await service.get_model_config_internal(config1.id)
+        # 获取更新后的完整内部配置
+        updated_config = await service.get_model_config_internal(config1.id)
 
     session = TushareSession(
         session_id=session_id,
@@ -389,6 +393,17 @@ async def test_different_model_id_rebuild_agent(test_configs):
     assert agent_id_after_first != agent_id_after_second, "不同 model_id 应该重建 Agent"
 
     logger.info("测试通过: Agent 被重建")
+
+    finally:
+        # 恢复 config1 的原始 models
+        try:
+            await service.update_model_config(
+                config1.id,
+                ModelConfigUpdate(models=original_config1_models),
+            )
+            logger.info(f"已恢复 config1 (ID={config1.id}) 的原始 models 配置")
+        except Exception as e:
+            logger.warning(f"恢复 config1 配置失败: {e}")
 
 
 @pytest.mark.e2e

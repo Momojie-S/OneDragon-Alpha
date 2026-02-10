@@ -232,7 +232,7 @@ async def _get_analyse_by_code_agent(self, analyse_id: int):
 
 ### 组件交互流程
 
-```
+```text
 ┌─────────────┐
 │   Client    │
 └─────┬───────┘
@@ -274,17 +274,17 @@ async def _get_analyse_by_code_agent(self, analyse_id: int):
 ### 数据流
 
 1. **请求阶段**:
-   ```
+   ```text
    Client → Router → 验证配置和模型 → Session.chat(model_config_id, model_id)
    ```
 
 2. **Agent 创建/复用**:
-   ```
+   ```text
    Session → 比较 (config_id, model_id) → ModelFactory → ReActAgent
    ```
 
 3. **响应阶段**:
-   ```
+   ```text
    ReActAgent → Session → Router → Client (SSE Stream)
    ```
 

@@ -1,6 +1,7 @@
 import json
 import os
 from enum import StrEnum
+from functools import lru_cache
 from typing import Annotated, Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,10 +9,24 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from one_dragon_alpha.core.system.log import get_logger
 from one_dragon_alpha.server.dependencies import ContextDep
 from one_dragon_alpha.session.session import Session
 
 router = APIRouter(prefix="/chat")
+logger = get_logger(__name__)
+
+
+@lru_cache
+def _get_mysql_service():
+    """获取 MySQL 连接服务单例.
+
+    Returns:
+        MySQLConnectionService: MySQL 连接服务实例
+    """
+    from one_dragon_alpha.services.mysql import MySQLConnectionService
+
+    return MySQLConnectionService()
 
 
 async def get_db_session() -> AsyncSession:
@@ -23,18 +38,13 @@ async def get_db_session() -> AsyncSession:
     Raises:
         HTTPException: 如果无法获取数据库会话
     """
-    from one_dragon_alpha.services.mysql import MySQLConnectionService
-
     try:
-        # 获取 MySQL 连接服务实例
-        mysql_service = MySQLConnectionService()
+        # 获取 MySQL 连接服务单例
+        mysql_service = _get_mysql_service()
         async with await mysql_service.get_session() as session:
             yield session
     except Exception as e:
-        from one_dragon_agent.core.system.log import get_logger
-
-        logger = get_logger(__name__)
-        logger.error(f"无法获取数据库会话: {e}")
+        logger.exception(f"无法获取数据库会话: {e}")
         raise HTTPException(
             status_code=500,
             detail="无法连接到数据库",

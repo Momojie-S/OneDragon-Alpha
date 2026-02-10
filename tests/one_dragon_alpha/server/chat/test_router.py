@@ -104,7 +104,7 @@ async def test_chat_request_missing_model_id():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-@patch("one_dragon_agent.core.model.service.ModelConfigService")
+@patch("one_dragon_alpha.server.chat.router.ModelConfigService")
 async def test_nonexistent_config_id_returns_404(mock_service_class, mock_config, mock_db_session):
     """测试不存在的 config_id 返回 404 错误."""
     # 模拟 ModelConfigService
@@ -135,7 +135,7 @@ async def test_nonexistent_config_id_returns_404(mock_service_class, mock_config
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-@patch("one_dragon_agent.core.model.service.ModelConfigService")
+@patch("one_dragon_alpha.server.chat.router.ModelConfigService")
 async def test_disabled_config_id_returns_400(mock_service_class, mock_disabled_config, mock_db_session):
     """测试已禁用的 config_id 返回 400 错误."""
     # 模拟 ModelConfigService
@@ -167,7 +167,7 @@ async def test_disabled_config_id_returns_400(mock_service_class, mock_disabled_
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-@patch("one_dragon_agent.core.model.service.ModelConfigService")
+@patch("one_dragon_alpha.server.chat.router.ModelConfigService")
 async def test_model_id_not_in_config_returns_400(mock_service_class, mock_config, mock_db_session):
     """测试 model_id 不在配置中返回 400 错误."""
     # 模拟 ModelConfigService
@@ -199,7 +199,7 @@ async def test_model_id_not_in_config_returns_400(mock_service_class, mock_confi
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-@patch("one_dragon_agent.core.model.service.ModelConfigService")
+@patch("one_dragon_alpha.server.chat.router.ModelConfigService")
 @patch("one_dragon_alpha.server.chat.router.get_session")
 async def test_valid_config_and_model_id_succeeds(
     mock_get_session, mock_service_class, mock_config, mock_db_session

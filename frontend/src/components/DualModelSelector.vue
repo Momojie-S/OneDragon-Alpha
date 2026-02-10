@@ -92,7 +92,8 @@ const loadSelection = (): { model_config_id?: number; model_id?: string } | null
       model_id: parsed.model_id,
     }
   } catch (err) {
-    console.error('读取 localStorage 失败:', err)
+    console.error('读取 localStorage 失败，清除损坏的数据:', err)
+    clearSelection() // 清除损坏的数据
     return null
   }
 }
@@ -348,6 +349,7 @@ watch(
   width: 100%;
   max-width: 840px;
   margin: 0 auto 20px;
+  position: relative;
 }
 
 .config-selector,

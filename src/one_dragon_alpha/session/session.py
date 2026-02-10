@@ -113,8 +113,6 @@ class Session:
 
         Args:
             user_input: The user's message content.
-            model_config_id: Model configuration ID to use.
-            model_id: Model ID within the configuration to use.
 
         Yields:
             SessionMessage objects containing response chunks and completion status.
