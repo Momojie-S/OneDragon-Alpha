@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 """通用模型配置服务层."""
 
-import asyncio
 from datetime import datetime
-from typing import Any
 
-import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from one_dragon_agent.core.model.models import (
@@ -41,7 +38,9 @@ class ModelConfigService:
         self._session = session
         self._repository = ModelConfigRepository(session)
 
-    async def validate_config_unique(self, name: str, exclude_id: int | None = None) -> bool:
+    async def validate_config_unique(
+        self, name: str, exclude_id: int | None = None
+    ) -> bool:
         """验证配置名称唯一性.
 
         Args:
@@ -70,7 +69,9 @@ class ModelConfigService:
         base_url = base_url.strip()
         return base_url.startswith(("http://", "https://"))
 
-    async def create_model_config(self, config: ModelConfigCreate) -> ModelConfigResponse:
+    async def create_model_config(
+        self, config: ModelConfigCreate
+    ) -> ModelConfigResponse:
         """创建模型配置.
 
         Args:
@@ -201,7 +202,9 @@ class ModelConfigService:
         """
         return await self._repository.delete_config(config_id)
 
-    async def toggle_config_status(self, config_id: int, is_active: bool) -> ModelConfigResponse:
+    async def toggle_config_status(
+        self, config_id: int, is_active: bool
+    ) -> ModelConfigResponse:
         """切换配置启用状态.
 
         Args:
@@ -277,7 +280,11 @@ class ModelConfigService:
             response = await agent(test_msg)
 
             # 提取响应内容
-            content = response.get_text_content() if hasattr(response, 'get_text_content') else str(response)
+            content = (
+                response.get_text_content()
+                if hasattr(response, "get_text_content")
+                else str(response)
+            )
             content_preview = content[:50] if content else ""
 
             return TestConnectionResponse(
@@ -290,7 +297,12 @@ class ModelConfigService:
 
             # 尝试识别错误类型
             error_str = str(e).lower()
-            if "401" in error_str or "unauthorized" in error_str or "api key" in error_str or "incorrect" in error_str:
+            if (
+                "401" in error_str
+                or "unauthorized" in error_str
+                or "api key" in error_str
+                or "incorrect" in error_str
+            ):
                 return TestConnectionResponse(
                     success=False,
                     message="API Key 无效或已过期",

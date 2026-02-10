@@ -2,7 +2,7 @@
 """通用模型配置数据模型."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -26,17 +26,17 @@ class ModelConfigBase(BaseModel):
 
     Attributes:
         name: 配置名称
-        provider: 模型提供商（当前仅支持 "openai"）
-        base_url: API baseUrl
+        provider: 模型提供商（支持 openai 和 qwen）
+        base_url: API baseUrl（qwen 不需要）
         models: 模型列表
         is_active: 是否启用
     """
 
     name: str = Field(..., min_length=1, max_length=255, description="配置名称")
-    provider: Literal["openai"] = Field(
-        ..., description="模型提供商（当前仅支持 openai）"
+    provider: Literal["openai", "qwen"] = Field(
+        ..., description="模型提供商（支持 openai 和 qwen）"
     )
-    base_url: str = Field(..., min_length=1, description="API baseUrl")
+    base_url: str = Field(default="", description="API baseUrl（qwen 不需要）")
     models: list[ModelInfo] = Field(..., min_length=1, description="模型列表")
     is_active: bool = Field(default=True, description="是否启用")
 
@@ -73,6 +73,9 @@ class ModelConfigBase(BaseModel):
             ValueError: 如果 baseUrl 格式无效
         """
         v = v.strip()
+        # 允许空字符串（用于 qwen provider）
+        if not v:
+            return v
         if not v.startswith(("http://", "https://")):
             raise ValueError("baseUrl 必须以 http:// 或 https:// 开头")
         return v
@@ -137,14 +140,12 @@ class ModelConfigUpdate(BaseModel):
     """
 
     name: str | None = Field(None, min_length=1, max_length=255, description="配置名称")
-    provider: Literal["openai"] | None = Field(None, description="模型提供商")
-    base_url: str | None = Field(None, min_length=1, description="API baseUrl")
+    provider: Literal["openai", "qwen"] | None = Field(None, description="模型提供商")
+    base_url: str | None = Field(None, description="API baseUrl")
     api_key: str | None = Field(None, description="API 密钥（为空则不修改）")
     models: list[ModelInfo] | None = Field(None, min_length=1, description="模型列表")
     is_active: bool | None = Field(None, description="是否启用")
-    updated_at: datetime | None = Field(
-        None, description="更新时间（用于乐观锁）"
-    )
+    updated_at: datetime | None = Field(None, description="更新时间（用于乐观锁）")
 
     @field_validator("name")
     @classmethod
@@ -253,7 +254,9 @@ class PaginatedModelConfigResponse(BaseModel):
     total: int = Field(..., ge=0, description="总记录数")
     page: int = Field(..., ge=1, description="当前页码")
     page_size: int = Field(..., ge=1, le=100, description="每页记录数")
-    items: list[ModelConfigResponse] = Field(default_factory=list, description="模型配置列表")
+    items: list[ModelConfigResponse] = Field(
+        default_factory=list, description="模型配置列表"
+    )
 
 
 class TestConnectionRequest(BaseModel):
@@ -284,6 +287,9 @@ class TestConnectionRequest(BaseModel):
             ValueError: 如果 baseUrl 格式无效
         """
         v = v.strip()
+        # 允许空字符串（用于 qwen provider）
+        if not v:
+            return v
         if not v.startswith(("http://", "https://")):
             raise ValueError("baseUrl 必须以 http:// 或 https:// 开头")
         return v

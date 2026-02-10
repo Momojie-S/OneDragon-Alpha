@@ -391,4 +391,250 @@ const error = ref<string | null>(null)            // 错误信息
 
 **注意**: 当前实现仅保存用户选择到组件状态，尚未将选中的模型配置 ID 传递给后端聊天接口。这是为未来功能预留的扩展点。
 
+---
+
+## DualModelSelector - 双层模型选择器
+
+### 概述
+
+`DualModelSelector` 是一个双层级联选择器组件，用于在发送聊天消息前选择模型配置和具体模型。它替代了原有的单层 `ModelSelector`，提供了更细粒度的模型选择能力。
+
+### 组件位置
+
+```
+frontend/src/components/DualModelSelector.vue
+```
+
+### 功能特性
+
+1. **双层选择**：
+   - 第一层：选择模型配置（ModelConfig）
+   - 第二层：选择具体模型（Model）
+
+2. **能力标签**：
+   - 视觉能力标签（👁️ 图标）
+   - 思考能力标签（💭 图标）
+
+3. **状态持久化**：
+   - 自动保存选择到 localStorage
+   - 页面刷新后恢复选择
+   - 无效选择自动清理
+
+4. **响应式布局**：
+   - 桌面端：并排显示
+   - 移动端：垂直堆叠
+
+### Props
+
+```typescript
+interface Props {
+  modelConfigId?: number  // 模型配置 ID（可选，用于 v-model）
+  modelId?: string        // 模型 ID（可选，用于 v-model）
+  autoSelect?: boolean    // 是否自动选择第一个可用配置（默认 false）
+}
+```
+
+### Events
+
+```typescript
+interface Emits {
+  (e: 'change', value: {
+    model_config_id: number
+    model_id: string
+  }): void  // 选择变更时触发
+}
+```
+
+### 使用示例
+
+#### 基础用法
+
+```vue
+<template>
+  <DualModelSelector
+    @change="handleModelChange"
+  />
+</template>
+
+<script setup lang="ts">
+const handleModelChange = (value: { model_config_id: number; model_id: string }) => {
+  console.log('Selected model:', value)
+  // 发送聊天请求时传递这些参数
+}
+</script>
+```
+
+#### v-model 用法
+
+```vue
+<template>
+  <DualModelSelector
+    v-model:model-config-id="selectedConfigId"
+    v-model:model-id="selectedModelId"
+    @change="handleModelChange"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const selectedConfigId = ref<number>()
+const selectedModelId = ref<string>()
+
+const handleModelChange = (value: { model_config_id: number; model_id: string }) => {
+  // 更新本地状态
+  selectedConfigId.value = value.model_config_id
+  selectedModelId.value = value.model_id
+}
+</script>
+```
+
+### 与 ChatAnalysis 的集成
+
+在 `ChatAnalysis.vue` 中的集成方式：
+
+```vue
+<template>
+  <div class="chat-container">
+    <!-- 双层模型选择器 -->
+    <DualModelSelector
+      class="dual-model-selector-container"
+      @change="handleModelChange"
+    />
+
+    <div class="chat-content">
+      <!-- 消息列表 -->
+    </div>
+
+    <div class="chat-input">
+      <!-- 输入框 -->
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+const selectedModelConfigId = ref<number>()
+const selectedModelId = ref<string>()
+
+const handleModelChange = (value: { model_config_id: number; model_id: string }) => {
+  selectedModelConfigId.value = value.model_config_id
+  selectedModelId.value = value.model_id
+}
+
+const sendMessage = () => {
+  // 验证是否已选择模型
+  if (!selectedModelConfigId.value || !selectedModelId.value) {
+    ElMessage.warning('请先选择模型配置和具体模型')
+    return
+  }
+
+  // 发送HTTP SSE消息，传递 model_config_id 和 model_id
+  chatHttpService.sendChatMessage(
+    inputMessage.value,
+    selectedModelConfigId.value,
+    selectedModelId.value,
+  )
+}
+</script>
+```
+
+### localStorage 持久化
+
+组件自动将用户选择保存到 localStorage：
+
+**键名：** `chat_model_selection`
+
+**数据格式：**
+```json
+{
+  "model_config_id": 1,
+  "model_id": "gpt-4"
+}
+```
+
+**行为：**
+- 用户选择后自动保存
+- 组件挂载时自动恢复
+- 如果配置或模型不再可用，自动清理
+
+### 状态管理
+
+组件内部维护以下状态：
+
+```typescript
+const configs = ref<ModelConfigResponse[]>([])  // 配置列表
+const selectedConfigId = ref<number>()          // 选中的配置 ID
+const selectedModelId = ref<string>()            // 选中的模型 ID
+const isLoading = ref<boolean>(true)             // 加载状态
+const error = ref<string | null>(null)           // 错误信息
+```
+
+### API 调用
+
+组件调用以下后端 API：
+
+1. **获取配置列表**：
+   ```
+   GET /api/models/configs?page=1&page_size=100&is_active=true
+   ```
+
+2. **响应格式**：
+   ```json
+   {
+     "total": 2,
+     "items": [
+       {
+         "id": 1,
+         "name": "OpenAI Config",
+         "provider": "openai",
+         "models": [
+           {
+             "model_id": "gpt-4",
+             "support_vision": true,
+             "support_thinking": false
+           }
+         ],
+         "is_active": true
+       }
+     ]
+   }
+   ```
+
+### 样式类名
+
+组件使用以下 CSS 类名：
+
+- `.dual-model-selector` - 容器
+- `.config-selector` - 配置选择器
+- `.model-selector` - 模型选择器
+- `.model-tag` - 能力标签
+- `.empty-state` - 空状态提示
+- `.error-state` - 错误状态
+
+### 测试
+
+运行 DualModelSelector E2E 测试：
+
+```bash
+cd frontend
+pnpm test:e2e chat-model-selector
+```
+
+测试覆盖：
+- ✅ 页面加载时双层选择器正确显示
+- ✅ 选择配置后显示模型列表
+- ✅ localStorage 持久化和恢复
+- ✅ 切换配置时模型列表更新
+- ✅ 没有可用配置时显示提示
+- ✅ 发送消息前验证模型选择
+- ✅ 响应式布局（移动端）
+- ✅ 模型能力标签显示
+
+### 注意事项
+
+1. **必填验证**：发送聊天消息前必须检查 `model_config_id` 和 `model_id` 是否已选择
+2. **错误处理**：组件会自动处理 API 错误并提供重试按钮
+3. **性能优化**：配置列表在组件挂载时一次性加载，避免频繁请求
+4. **兼容性**：替代了原有的 `ModelSelector`，确保数据格式兼容
+
 ```

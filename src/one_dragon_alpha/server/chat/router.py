@@ -54,6 +54,7 @@ class ChatRequest(BaseModel):
         model_config_id: Model configuration ID to use for this request.
         model_id: Model ID within the configuration to use.
     """
+
     session_id: str | None = None
     user_input: str
     model_config_id: int
@@ -67,6 +68,7 @@ class GetAnalysisRequest(BaseModel):
         session_id: Unique identifier for chat session.
         analyse_id: Analysis ID to retrieve results for.
     """
+
     session_id: str
     analyse_id: int
 
@@ -90,7 +92,9 @@ class ChatResponseType(StrEnum):
 
     MESSAGE_UPDATE = "message_update"  # Message update package (SSE/WebSocket)
     MESSAGE_COMPLETED = "message_completed"  # Final chunk of a message (SSE/WebSocket)
-    RESPONSE_COMPLETED = "response_completed"  # Final chunk of whole response (SSE/WebSocket)
+    RESPONSE_COMPLETED = (
+        "response_completed"  # Final chunk of whole response (SSE/WebSocket)
+    )
     STATUS = "status"  # Status update (WebSocket)
     ERROR = "error"  # Error response (all channels)
 
@@ -103,6 +107,7 @@ class ChatResponse(BaseModel):
         type: Type of response message.
         message: Response message as a dictionary.
     """
+
     session_id: str
     type: str  # ChatResponseType
     message: dict[str, Any]
@@ -168,14 +173,24 @@ async def stream_response_generator(
         SSE-formatted response chunks.
     """
     try:
-        async for session_message in session.chat(user_input, model_config_id, model_id, config):
-            response_type = ChatResponseType.RESPONSE_COMPLETED if session_message.response_completed else (
-                ChatResponseType.MESSAGE_COMPLETED if session_message.message_completed else ChatResponseType.MESSAGE_UPDATE
+        async for session_message in session.chat(
+            user_input, model_config_id, model_id, config
+        ):
+            response_type = (
+                ChatResponseType.RESPONSE_COMPLETED
+                if session_message.response_completed
+                else (
+                    ChatResponseType.MESSAGE_COMPLETED
+                    if session_message.message_completed
+                    else ChatResponseType.MESSAGE_UPDATE
+                )
             )
             response = ChatResponse(
                 type=response_type,
                 session_id=session_id,
-                message={} if session_message.msg is None else session_message.msg.to_dict(),
+                message={}
+                if session_message.msg is None
+                else session_message.msg.to_dict(),
             )
             yield f"data: {response.model_dump_json()}\n\n"
     except Exception as e:
@@ -188,7 +203,9 @@ async def stream_response_generator(
 
 
 @router.post("/stream")
-async def chat_stream(request: ChatRequest, session: SessionDep, context: ContextDep) -> StreamingResponse:
+async def chat_stream(
+    request: ChatRequest, session: SessionDep, context: ContextDep
+) -> StreamingResponse:
     """Process a chat message and return streaming response.
 
     This endpoint provides a streaming interface for chat operations.
@@ -250,7 +267,9 @@ async def chat_stream(request: ChatRequest, session: SessionDep, context: Contex
 
 
 @router.post("/get_analyse_by_code_result")
-async def get_analyse_by_code_result(request: GetAnalysisRequest, context: ContextDep) -> dict[str, Any]:
+async def get_analyse_by_code_result(
+    request: GetAnalysisRequest, context: ContextDep
+) -> dict[str, Any]:
     """Get analysis results by session ID and analysis ID.
 
     This endpoint retrieves the analysis results stored in the workspace
@@ -270,24 +289,36 @@ async def get_analyse_by_code_result(request: GetAnalysisRequest, context: Conte
     # Validate session exists
     session = context.session_service.get_session(request.session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail=f"Session not found: {request.session_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Session not found: {request.session_id}"
+        )
 
     # Get workspace directory from environment
     workspace_dir = os.getenv("WORKSPACE_DIR")
     if not workspace_dir:
-        raise HTTPException(status_code=500, detail="WORKSPACE_DIR environment variable not set")
+        raise HTTPException(
+            status_code=500, detail="WORKSPACE_DIR environment variable not set"
+        )
 
     # Construct analysis directory path
-    analyse_dir = os.path.join(workspace_dir, "analyse_by_code", f"{request.session_id}-{request.analyse_id}")
+    analyse_dir = os.path.join(
+        workspace_dir, "analyse_by_code", f"{request.session_id}-{request.analyse_id}"
+    )
 
     # Check if analysis directory exists
     if not os.path.exists(analyse_dir):
-        raise HTTPException(status_code=404, detail=f"Analysis directory not found: {request.analyse_id}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Analysis directory not found: {request.analyse_id}",
+        )
 
     # Check if result.json file exists
     result_file = os.path.join(analyse_dir, "result.json")
     if not os.path.exists(result_file):
-        raise HTTPException(status_code=404, detail=f"Result file not found for analysis: {request.analyse_id}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Result file not found for analysis: {request.analyse_id}",
+        )
 
     try:
         # Read and return the result.json file
@@ -297,10 +328,14 @@ async def get_analyse_by_code_result(request: GetAnalysisRequest, context: Conte
         return {
             "session_id": request.session_id,
             "analyse_id": request.analyse_id,
-            "result": result_data
+            "result": result_data,
         }
 
     except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Invalid JSON in result file: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Invalid JSON in result file: {str(e)}"
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading result file: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error reading result file: {str(e)}"
+        )

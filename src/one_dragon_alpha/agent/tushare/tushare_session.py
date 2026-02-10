@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 from typing import AsyncGenerator, Optional
@@ -20,14 +19,12 @@ from agentscope.tool import (
 from one_dragon_alpha.agent.tushare.tools.basic import tushare_stock_basic_by_name_like
 from one_dragon_alpha.agent.tushare.tools.financial import tushare_income
 from one_dragon_alpha.session.session import Session
-from one_dragon_alpha.session.session_message import SessionMessage
 from one_dragon_alpha.tool.code import execute_python_code_by_path
 from one_dragon_agent.core.model.model_factory import ModelFactory
 from one_dragon_agent.core.model.models import ModelConfigInternal
 
 
 class TushareSession(Session):
-
     def __init__(
         self,
         session_id: str,
@@ -93,8 +90,10 @@ class TushareSession(Session):
 
         """
         # 检查是否需要切换
-        if (self._current_model_config_id == config.id and
-            self._current_model_id == model_id):
+        if (
+            self._current_model_config_id == config.id
+            and self._current_model_id == model_id
+        ):
             # 模型未变化，无需重建
             return
 
@@ -140,8 +139,10 @@ class TushareSession(Session):
             SessionMessage 对象
         """
         # 检查是否需要切换模型
-        if (self._current_model_config_id != model_config_id or
-            self._current_model_id != model_id):
+        if (
+            self._current_model_config_id != model_config_id
+            or self._current_model_id != model_id
+        ):
             self.set_model(config, model_id)
 
         # 调用父类的 chat 方法（不传递 model_config_id 和 model_id）
@@ -157,12 +158,18 @@ class TushareSession(Session):
         Args:
             analyse_id (int): 分析ID。
         """
-        return ToolResponse(content=[
-            TextBlock(
-                type="text",
-                text=json.dumps({"analyse_id": analyse_id}, ensure_ascii=False, separators=(',', ':'))
-            )
-        ])
+        return ToolResponse(
+            content=[
+                TextBlock(
+                    type="text",
+                    text=json.dumps(
+                        {"analyse_id": analyse_id},
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                )
+            ]
+        )
 
     async def analyse_by_code(
         self,
@@ -183,12 +190,18 @@ class TushareSession(Session):
         agent = await self._get_analyse_by_code_agent(analyse_id)
         msg = await agent(Msg(name="user", content=goal, role="user"))
 
-        return ToolResponse(content=[
-            TextBlock(
-                type="text",
-                text=json.dumps({"analyse_id": analyse_id, "result": msg.to_dict()}, ensure_ascii=False, separators=(',', ':'))
-            )
-        ])
+        return ToolResponse(
+            content=[
+                TextBlock(
+                    type="text",
+                    text=json.dumps(
+                        {"analyse_id": analyse_id, "result": msg.to_dict()},
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                )
+            ]
+        )
 
     async def _get_analyse_by_code_agent(self, analyse_id: int) -> AgentBase:
         if analyse_id in self._analyse_by_code_map:
@@ -205,7 +218,7 @@ class TushareSession(Session):
             name="context7",
             transport="streamable_http",
             url="https://mcp.context7.com/mcp",
-            headers={"Authorization": f"Bearer {os.getenv('CONTEXT7_API_KEY')}"}
+            headers={"Authorization": f"Bearer {os.getenv('CONTEXT7_API_KEY')}"},
         )
         await toolkit.register_mcp_client(context7)
 
@@ -242,8 +255,7 @@ class TushareSession(Session):
         return _ANALYSE_BY_CODE_SYSTEM_PROMPT % (analyse_workspace)
 
 
-_MAIN_SYSTEM_PROMPT = \
-"""
+_MAIN_SYSTEM_PROMPT = """
 你是叫OneDragonAlpha的股票分析助手。
 
 # 行为规范
@@ -273,8 +285,7 @@ _MAIN_SYSTEM_PROMPT = \
 """
 
 
-_ANALYSE_BY_CODE_SYSTEM_PROMPT = \
-"""
+_ANALYSE_BY_CODE_SYSTEM_PROMPT = """
 你是叫OneDragonAlpha的股票分析助手，通过编写python代码的方式进行股票分析。
 
 # 核心任务

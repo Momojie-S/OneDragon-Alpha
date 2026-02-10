@@ -3,9 +3,23 @@
 
 import json
 from datetime import datetime
-from typing import Self
 
-from sqlalchemy import Table, MetaData, select, update, delete, func, Column, BigInteger, String, Text, Boolean, DateTime, Index, JSON
+from sqlalchemy import (
+    Table,
+    MetaData,
+    select,
+    update,
+    delete,
+    func,
+    Column,
+    BigInteger,
+    String,
+    Text,
+    Boolean,
+    DateTime,
+    Index,
+    JSON,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
@@ -61,7 +75,11 @@ class ModelConfigORM:
             响应模型字典
         """
         # 解析 JSON 字段
-        models_data = json.loads(row["models"]) if isinstance(row["models"], str) else row["models"]
+        models_data = (
+            json.loads(row["models"])
+            if isinstance(row["models"], str)
+            else row["models"]
+        )
 
         return {
             "id": row["id"],
@@ -132,10 +150,7 @@ class ModelConfigRepository:
             # 使用 SQLAlchemy Core 插入数据
             from sqlalchemy import insert
 
-            stmt = (
-                insert(table)
-                .values(**data)
-            )
+            stmt = insert(table).values(**data)
 
             result = await self._session.execute(stmt)
             await self._session.commit()
@@ -221,7 +236,11 @@ class ModelConfigRepository:
         row_dict = dict(row._mapping)
 
         # 解析 JSON 字段
-        models_data = json.loads(row_dict["models"]) if isinstance(row_dict["models"], str) else row_dict["models"]
+        models_data = (
+            json.loads(row_dict["models"])
+            if isinstance(row_dict["models"], str)
+            else row_dict["models"]
+        )
 
         # 构建 ModelConfigInternal 所需的字典(包含 api_key)
         config_data = {
@@ -334,11 +353,7 @@ class ModelConfigRepository:
         update_data["updated_at"] = datetime.now()
 
         try:
-            stmt = (
-                update(table)
-                .where(table.c.id == config_id)
-                .values(**update_data)
-            )
+            stmt = update(table).where(table.c.id == config_id).values(**update_data)
 
             # 将乐观锁检查移到 WHERE 条件中，使其成为原子操作
             if config_update.updated_at is not None:
@@ -396,7 +411,9 @@ class ModelConfigRepository:
 
         return True
 
-    async def toggle_config_status(self, config_id: int, is_active: bool) -> ModelConfigResponse:
+    async def toggle_config_status(
+        self, config_id: int, is_active: bool
+    ) -> ModelConfigResponse:
         """切换配置启用状态.
 
         Args:
