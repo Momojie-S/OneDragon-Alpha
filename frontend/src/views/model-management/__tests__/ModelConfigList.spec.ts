@@ -15,7 +15,7 @@ vi.mock('../../../services/modelApi', async () => {
     ...actual,
     getModelConfigs: vi.fn(),
     deleteModelConfig: vi.fn(),
-    toggleConfigStatus: vi.fn()
+    toggleConfigStatus: vi.fn(),
   }
 })
 
@@ -27,8 +27,8 @@ vi.mock('element-plus', async () => {
     ElMessage: {
       success: vi.fn(),
       error: vi.fn(),
-      warning: vi.fn()
-    }
+      warning: vi.fn(),
+    },
   }
 })
 
@@ -43,11 +43,11 @@ describe('ModelConfigList.vue', () => {
       base_url: 'https://api.deepseek.com',
       models: [
         { model_id: 'deepseek-chat', support_vision: true, support_thinking: false },
-        { model_id: 'deepseek-coder', support_vision: false, support_thinking: true }
+        { model_id: 'deepseek-coder', support_vision: false, support_thinking: true },
       ],
       is_active: true,
       created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z'
+      updated_at: '2025-01-01T00:00:00Z',
     },
     {
       id: 2,
@@ -57,8 +57,8 @@ describe('ModelConfigList.vue', () => {
       models: [{ model_id: 'moonshot-v1-8k', support_vision: false, support_thinking: false }],
       is_active: false,
       created_at: '2025-01-02T00:00:00Z',
-      updated_at: '2025-01-02T00:00:00Z'
-    }
+      updated_at: '2025-01-02T00:00:00Z',
+    },
   ]
 
   beforeEach(() => {
@@ -67,7 +67,7 @@ describe('ModelConfigList.vue', () => {
       total: 2,
       page: 1,
       page_size: 20,
-      items: mockConfigs
+      items: mockConfigs,
     })
   })
 
@@ -91,14 +91,14 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       // 等待数据加载
       await wrapper.vm.$nextTick()
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
 
       expect(wrapper.find('.model-config-list').exists()).toBe(true)
     })
@@ -116,14 +116,14 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       // 等待数据加载
       await wrapper.vm.$nextTick()
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
 
       expect(wrapper.vm.configs).toEqual(mockConfigs)
       expect(wrapper.vm.pagination.total).toBe(2)
@@ -144,9 +144,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       const { getModelConfigs } = require('../../../services/modelApi')
@@ -158,8 +158,8 @@ describe('ModelConfigList.vue', () => {
       expect(getModelConfigs).toHaveBeenCalledWith(
         expect.objectContaining({
           active: true,
-          page: 1
-        })
+          page: 1,
+        }),
       )
     })
 
@@ -176,9 +176,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       const { getModelConfigs } = require('../../../services/modelApi')
@@ -189,8 +189,8 @@ describe('ModelConfigList.vue', () => {
 
       expect(getModelConfigs).toHaveBeenCalledWith(
         expect.objectContaining({
-          provider: 'openai'
-        })
+          provider: 'openai',
+        }),
       )
     })
   })
@@ -209,9 +209,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       const { getModelConfigs } = require('../../../services/modelApi')
@@ -219,9 +219,7 @@ describe('ModelConfigList.vue', () => {
       await wrapper.vm.handlePageChange(2)
 
       expect(wrapper.vm.pagination.page).toBe(2)
-      expect(getModelConfigs).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 2 })
-      )
+      expect(getModelConfigs).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }))
     })
 
     it('应该正确处理每页数量改变', async () => {
@@ -237,9 +235,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       const { getModelConfigs } = require('../../../services/modelApi')
@@ -265,9 +263,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       await wrapper.vm.handleCreate()
@@ -289,9 +287,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       await wrapper.vm.handleEdit(mockConfigs[0])
@@ -313,9 +311,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       await wrapper.vm.handleDelete(mockConfigs[0])
@@ -339,15 +337,15 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       const { toggleConfigStatus } = require('../../../services/modelApi')
       toggleConfigStatus.mockResolvedValue({
         ...mockConfigs[0],
-        is_active: false
+        is_active: false,
       })
 
       const config = { ...mockConfigs[0] }
@@ -371,9 +369,9 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       const { toggleConfigStatus } = require('../../../services/modelApi')
@@ -399,22 +397,18 @@ describe('ModelConfigList.vue', () => {
             'el-pagination': true,
             'el-switch': true,
             'el-icon': true,
-            'ModelConfigDialog': true
-          }
-        }
+            ModelConfigDialog: true,
+          },
+        },
       })
 
       const { toggleConfigStatus } = require('../../../services/modelApi')
-      toggleConfigStatus.mockRejectedValue(
-        new Error('配置已被其他用户修改，请刷新')
-      )
+      toggleConfigStatus.mockRejectedValue(new Error('配置已被其他用户修改，请刷新'))
 
       const config = { ...mockConfigs[0] }
       await wrapper.vm.handleToggleStatus(config)
 
-      expect(ElMessage.error).toHaveBeenCalledWith(
-        expect.stringContaining('已被其他用户修改')
-      )
+      expect(ElMessage.error).toHaveBeenCalledWith(expect.stringContaining('已被其他用户修改'))
     })
   })
 })

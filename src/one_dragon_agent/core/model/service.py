@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 """通用模型配置服务层."""
 
-import asyncio
 from datetime import datetime
-from typing import Any
 
-import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from one_dragon_agent.core.model.models import (
     ModelConfigCreate,
     ModelConfigUpdate,
     ModelConfigResponse,
+    ModelConfigInternal,
     TestConnectionRequest,
     TestConnectionResponse,
     PaginatedModelConfigResponse,
@@ -40,7 +38,9 @@ class ModelConfigService:
         self._session = session
         self._repository = ModelConfigRepository(session)
 
-    async def validate_config_unique(self, name: str, exclude_id: int | None = None) -> bool:
+    async def validate_config_unique(
+        self, name: str, exclude_id: int | None = None
+    ) -> bool:
         """验证配置名称唯一性.
 
         Args:
@@ -69,7 +69,9 @@ class ModelConfigService:
         base_url = base_url.strip()
         return base_url.startswith(("http://", "https://"))
 
-    async def create_model_config(self, config: ModelConfigCreate) -> ModelConfigResponse:
+    async def create_model_config(
+        self, config: ModelConfigCreate
+    ) -> ModelConfigResponse:
         """创建模型配置.
 
         Args:
@@ -90,6 +92,21 @@ class ModelConfigService:
         await self.validate_config_unique(config.name)
 
         return await self._repository.create_config(config)
+
+    async def get_model_config_internal(self, config_id: int) -> ModelConfigInternal:
+        """获取包含 api_key 的完整配置(仅供内部使用).
+
+        Args:
+            config_id: 配置 ID
+
+        Returns:
+            包含 api_key 的内部配置对象
+
+        Raises:
+            ValueError: 如果配置不存在
+        """
+        config = await self._repository.get_config_internal(config_id)
+        return config
 
     async def get_model_config(self, config_id: int) -> ModelConfigResponse:
         """获取单个配置.
@@ -185,7 +202,9 @@ class ModelConfigService:
         """
         return await self._repository.delete_config(config_id)
 
-    async def toggle_config_status(self, config_id: int, is_active: bool) -> ModelConfigResponse:
+    async def toggle_config_status(
+        self, config_id: int, is_active: bool
+    ) -> ModelConfigResponse:
         """切换配置启用状态.
 
         Args:
@@ -204,7 +223,7 @@ class ModelConfigService:
     async def test_connection(request: TestConnectionRequest) -> TestConnectionResponse:
         """测试 API 连接.
 
-        通过发送一个简单的聊天请求来验证连接（会消耗少量 token）。
+        使用 AgentScope Agent 发送一个简单的聊天请求来验证连接。
 
         Args:
             request: 测试连接请求
@@ -212,92 +231,92 @@ class ModelConfigService:
         Returns:
             测试连接响应
         """
-        base_url = request.base_url.rstrip("/")
-        api_key = request.api_key
-        model_id = request.model_id
+        from one_dragon_agent.core.model.model_factory import ModelFactory
+        from one_dragon_agent.core.model.models import ModelConfigInternal, ModelInfo
+        from agentscope.agent import ReActAgent
+        from agentscope.formatter import OpenAIChatFormatter
+        from agentscope.memory import InMemoryMemory
+        from agentscope.message import Msg
 
-        # 使用 chat completions 端点测试连接
-        url = f"{base_url}/v1/chat/completions"
-
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-
-        # 发送一个简单的测试消息
-        payload = {
-            "model": model_id,  # 使用用户配置的模型
-            "messages": [
-                {"role": "user", "content": "hi"}
+        # 构造临时的 ModelConfigInternal 对象
+        temp_config = ModelConfigInternal(
+            id=0,  # 临时 ID
+            name="test_connection_temp",
+            provider="openai",
+            base_url=request.base_url,
+            api_key=request.api_key,
+            models=[
+                ModelInfo(
+                    model_id=request.model_id,
+                    support_vision=False,
+                    support_thinking=False,
+                )
             ],
-            "max_tokens": 5,  # 限制返回 token 数量
-            "temperature": 0,
-        }
+            is_active=True,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
 
         try:
-            # 设置 15 秒超时
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.post(url, headers=headers, json=payload)
+            # 使用 ModelFactory 创建模型实例
+            model = ModelFactory.create_model(temp_config, request.model_id)
 
-                if response.status_code == 200:
-                    # 解析响应
-                    try:
-                        data = response.json()
-                        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                        return TestConnectionResponse(
-                            success=True,
-                            message=f"连接成功！模型回复: {content[:50]}",
-                        )
-                    except Exception:
-                        return TestConnectionResponse(
-                            success=True,
-                            message="连接成功！",
-                        )
-
-                elif response.status_code == 401:
-                    return TestConnectionResponse(
-                        success=False,
-                        message="API Key 无效或已过期",
-                        raw_error={"status_code": 401},
-                    )
-                elif response.status_code == 404:
-                    return TestConnectionResponse(
-                        success=False,
-                        message="API 端点不存在，请检查 Base URL 是否正确",
-                        raw_error={"status_code": 404},
-                    )
-                else:
-                    # 尝试解析错误信息
-                    try:
-                        error_data = response.json()
-                        error_msg = error_data.get("error", {}).get("message", response.text)
-                    except Exception:
-                        error_msg = response.text or f"HTTP {response.status_code}"
-
-                    return TestConnectionResponse(
-                        success=False,
-                        message=error_msg,
-                        raw_error={"status_code": response.status_code, "body": response.text},
-                    )
-
-        except asyncio.TimeoutError:
-            logger.error(f"测试连接超时: {base_url}")
-            return TestConnectionResponse(
-                success=False,
-                message="连接超时，请检查 baseUrl 是否正确",
-                raw_error={"error": "timeout"},
+            # 创建一个简单的 Agent 用于测试
+            agent = ReActAgent(
+                name="TestConnection",
+                sys_prompt="You are a helpful assistant.",
+                model=model,
+                formatter=OpenAIChatFormatter(),
+                memory=InMemoryMemory(),
             )
-        except httpx.ConnectError as e:
-            logger.error(f"测试连接失败: {e}")
-            return TestConnectionResponse(
-                success=False,
-                message=f"无法连接到服务器: {str(e)}",
-                raw_error={"error": str(e)},
+
+            # 禁用 agent 的控制台输出
+            agent.set_console_output_enabled(False)
+
+            # 创建测试消息
+            test_msg = Msg(name="user", content="hi", role="user")
+
+            # 调用 agent
+            response = await agent(test_msg)
+
+            # 提取响应内容
+            content = (
+                response.get_text_content()
+                if hasattr(response, "get_text_content")
+                else str(response)
             )
+            content_preview = content[:50] if content else ""
+
+            return TestConnectionResponse(
+                success=True,
+                message=f"连接成功！模型回复: {content_preview}",
+            )
+
         except Exception as e:
-            logger.exception(f"测试连接异常: {e}")
-            return TestConnectionResponse(
-                success=False,
-                message=f"连接失败: {str(e)}",
-                raw_error={"error": str(e)},
-            )
+            logger.exception(f"测试连接失败: {e}")
+
+            # 尝试识别错误类型
+            error_str = str(e).lower()
+            if (
+                "401" in error_str
+                or "unauthorized" in error_str
+                or "api key" in error_str
+                or "incorrect" in error_str
+            ):
+                return TestConnectionResponse(
+                    success=False,
+                    message="API Key 无效或已过期",
+                    raw_error={"error": str(e)},
+                )
+            elif "404" in error_str or "not found" in error_str:
+                return TestConnectionResponse(
+                    success=False,
+                    message="API 端点不存在，请检查 Base URL 是否正确（应包含完整路径，如 /v1）",
+                    raw_error={"error": str(e)},
+                )
+            else:
+                return TestConnectionResponse(
+                    success=False,
+                    message=f"连接失败: {str(e)}",
+                    raw_error={"error": str(e)},
+                )

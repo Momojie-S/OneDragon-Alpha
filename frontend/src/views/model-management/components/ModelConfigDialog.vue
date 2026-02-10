@@ -51,7 +51,10 @@
           show-password
           maxlength="500"
         />
-        <div v-if="isEdit" style="margin-top: 5px; color: var(--el-text-color-secondary); font-size: 12px">
+        <div
+          v-if="isEdit"
+          style="margin-top: 5px; color: var(--el-text-color-secondary); font-size: 12px"
+        >
           为了安全，不显示已保存的 API Key。留空则不修改。
         </div>
       </el-form-item>
@@ -76,28 +79,14 @@
 
           <!-- 模型卡片列表 -->
           <div class="model-list">
-            <div
-              v-for="(model, index) in formData.models"
-              :key="index"
-              class="model-card"
-            >
+            <div v-for="(model, index) in formData.models" :key="index" class="model-card">
               <div class="model-card-header">
                 <span class="model-index">#{{ index + 1 }}</span>
                 <div class="model-actions">
-                  <el-button
-                    type="primary"
-                    size="small"
-                    link
-                    @click="handleEditModel(index)"
-                  >
+                  <el-button type="primary" size="small" link @click="handleEditModel(index)">
                     编辑
                   </el-button>
-                  <el-button
-                    type="danger"
-                    size="small"
-                    link
-                    @click="handleDeleteModel(index)"
-                  >
+                  <el-button type="danger" size="small" link @click="handleDeleteModel(index)">
                     删除
                   </el-button>
                 </div>
@@ -107,7 +96,11 @@
                 <div class="model-capabilities">
                   <el-tag v-if="model.support_vision" type="success" size="small">视觉</el-tag>
                   <el-tag v-if="model.support_thinking" type="warning" size="small">思考</el-tag>
-                  <el-tag v-if="!model.support_vision && !model.support_thinking" type="info" size="small">
+                  <el-tag
+                    v-if="!model.support_vision && !model.support_thinking"
+                    type="info"
+                    size="small"
+                  >
                     无特殊能力
                   </el-tag>
                 </div>
@@ -128,12 +121,16 @@
             <el-icon><Connection /></el-icon>
             测试连接
           </el-button>
-          <div style="margin-top: 8px; color: #909399; font-size: 12px;">
+          <div style="margin-top: 8px; color: #909399; font-size: 12px">
             <el-icon><InfoFilled /></el-icon>
             测试连接会发送一条 "hi" 消息，将消耗少量 token
           </div>
         </div>
-        <span v-if="testResult" style="margin-left: 10px" :class="testResult.success ? 'test-success' : 'test-error'">
+        <span
+          v-if="testResult"
+          style="margin-left: 10px"
+          :class="testResult.success ? 'test-success' : 'test-error'"
+        >
           {{ testResult.message }}
         </span>
       </el-form-item>
@@ -146,13 +143,7 @@
 
     <template #footer>
       <el-button @click="handleCancel">取消</el-button>
-      <el-button
-        type="primary"
-        @click="handleSubmit"
-        :loading="saving"
-      >
-        保存
-      </el-button>
+      <el-button type="primary" @click="handleSubmit" :loading="saving"> 保存 </el-button>
     </template>
 
     <!-- 模型编辑对话框 -->
@@ -162,10 +153,7 @@
       width="500px"
       append-to-body
     >
-      <el-form
-        :model="editingModel"
-        label-width="100px"
-      >
+      <el-form :model="editingModel" label-width="100px">
         <el-form-item label="模型 ID" required>
           <el-input
             v-model="editingModel.model_id"
@@ -174,9 +162,7 @@
           />
         </el-form-item>
         <el-form-item label="能力标识">
-          <el-checkbox v-model="editingModel.support_vision">
-            支持视觉
-          </el-checkbox>
+          <el-checkbox v-model="editingModel.support_vision"> 支持视觉 </el-checkbox>
           <el-checkbox v-model="editingModel.support_thinking" style="margin-left: 20px">
             支持思考
           </el-checkbox>
@@ -202,7 +188,7 @@ import {
   type CreateModelConfigRequest,
   type UpdateModelConfigRequest,
   type ModelInfo,
-  type ModelConfig
+  type ModelConfig,
 } from '../../../services/modelApi'
 
 // ============================================================================
@@ -235,7 +221,7 @@ const editingModelIndex = ref(-1)
 const editingModel = reactive<ModelInfo>({
   model_id: '',
   support_vision: false,
-  support_thinking: false
+  support_thinking: false,
 })
 
 // 表单数据
@@ -246,21 +232,19 @@ const formData = reactive<CreateModelConfigRequest & { updated_at?: string }>({
   api_key: '',
   models: [],
   is_active: true,
-  updated_at: undefined
+  updated_at: undefined,
 })
 
 // 表单验证规则
 const formRules: FormRules = {
   name: [
     { required: true, message: '请输入配置名称', trigger: 'blur' },
-    { min: 2, max: 255, message: '长度在 2 到 255 个字符', trigger: 'blur' }
+    { min: 2, max: 255, message: '长度在 2 到 255 个字符', trigger: 'blur' },
   ],
-  provider: [
-    { required: true, message: '请选择提供商', trigger: 'change' }
-  ],
+  provider: [{ required: true, message: '请选择提供商', trigger: 'change' }],
   base_url: [
     { required: true, message: '请输入 Base URL', trigger: 'blur' },
-    { type: 'url', message: '请输入有效的 URL', trigger: 'blur' }
+    { type: 'url', message: '请输入有效的 URL', trigger: 'blur' },
   ],
   api_key: [
     {
@@ -271,8 +255,8 @@ const formRules: FormRules = {
           callback()
         }
       },
-      trigger: 'blur'
-    }
+      trigger: 'blur',
+    },
   ],
   models: [
     {
@@ -283,9 +267,9 @@ const formRules: FormRules = {
           callback()
         }
       },
-      trigger: 'change'
-    }
-  ]
+      trigger: 'change',
+    },
+  ],
 }
 
 // 是否为编辑模式
@@ -309,11 +293,11 @@ watch(
           api_key: '', // API Key 不回填
           models: [...props.config.models],
           is_active: props.config.is_active,
-          updated_at: props.config.updated_at
+          updated_at: props.config.updated_at,
         })
       }
     }
-  }
+  },
 )
 
 // ============================================================================
@@ -331,7 +315,7 @@ const resetForm = () => {
     api_key: '',
     models: [],
     is_active: true,
-    updated_at: undefined
+    updated_at: undefined,
   })
   testResult.value = null
   formRef.value?.clearValidate()
@@ -359,7 +343,7 @@ const handleAddModel = () => {
   Object.assign(editingModel, {
     model_id: '',
     support_vision: false,
-    support_thinking: false
+    support_thinking: false,
   })
   modelDialogVisible.value = true
 }
@@ -395,7 +379,7 @@ const handleSaveModel = () => {
   const modelData: ModelInfo = {
     model_id: editingModel.model_id.trim(),
     support_vision: editingModel.support_vision,
-    support_thinking: editingModel.support_thinking
+    support_thinking: editingModel.support_thinking,
   }
 
   if (editingModelIndex.value >= 0) {
@@ -434,7 +418,7 @@ const handleTestConnection = async () => {
     const result = await testConnection({
       base_url: formData.base_url,
       api_key: formData.api_key,
-      model_id: firstModel.model_id
+      model_id: firstModel.model_id,
     })
 
     testResult.value = result
@@ -474,7 +458,7 @@ const handleSubmit = async () => {
         base_url: formData.base_url,
         models: formData.models,
         is_active: formData.is_active,
-        updated_at: formData.updated_at
+        updated_at: formData.updated_at,
       }
 
       // 只有当用户输入了 API Key 时才更新
@@ -499,7 +483,7 @@ const handleSubmit = async () => {
       ElMessage({
         message: '该配置已被其他用户修改，请刷新后重试',
         type: 'warning',
-        duration: 5000
+        duration: 5000,
       })
     } else {
       ElMessage.error(`保存失败: ${errorMsg}`)
@@ -631,7 +615,8 @@ const handleSubmit = async () => {
 }
 
 @keyframes pulseSuccess {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -640,7 +625,8 @@ const handleSubmit = async () => {
 }
 
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
   25% {

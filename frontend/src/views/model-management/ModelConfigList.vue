@@ -73,22 +73,8 @@
         </el-table-column>
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button
-              type="primary"
-              size="small"
-              link
-              @click="handleEdit(row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              link
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <el-button type="primary" size="small" link @click="handleEdit(row)"> 编辑 </el-button>
+            <el-button type="danger" size="small" link @click="handleDelete(row)"> 删除 </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -115,22 +101,12 @@
     />
 
     <!-- 删除确认对话框 -->
-    <el-dialog
-      v-model="deleteDialogVisible"
-      title="确认删除"
-      width="400px"
-    >
+    <el-dialog v-model="deleteDialogVisible" title="确认删除" width="400px">
       <p>确定要删除配置「{{ currentConfig?.name }}」吗？</p>
-      <p style="color: var(--el-color-danger); font-size: 12px">
-        此操作不可撤销！
-      </p>
+      <p style="color: var(--el-color-danger); font-size: 12px">此操作不可撤销！</p>
       <template #footer>
         <el-button @click="deleteDialogVisible = false">取消</el-button>
-        <el-button
-          type="danger"
-          @click="confirmDelete"
-          :loading="deleteLoading"
-        >
+        <el-button type="danger" @click="confirmDelete" :loading="deleteLoading">
           确认删除
         </el-button>
       </template>
@@ -148,7 +124,7 @@ import {
   deleteModelConfig,
   toggleConfigStatus,
   type ModelConfig,
-  type PaginationParams
+  type PaginationParams,
 } from '../../services/modelApi'
 
 // ============================================================================
@@ -166,13 +142,13 @@ const currentConfig = ref<ModelConfig | undefined>(undefined)
 const pagination = reactive({
   page: 1,
   page_size: 20,
-  total: 0
+  total: 0,
 })
 
 // 过滤条件
 const filters = reactive({
   active: undefined as boolean | undefined,
-  provider: undefined as string | undefined
+  provider: undefined as string | undefined,
 })
 
 // ============================================================================
@@ -189,7 +165,7 @@ const loadConfigs = async () => {
       page: pagination.page,
       page_size: pagination.page_size,
       active: filters.active,
-      provider: filters.provider
+      provider: filters.provider,
     }
 
     const response = await getModelConfigs(params)
@@ -304,11 +280,9 @@ const handleToggleStatus = async (config: ModelConfig) => {
 
     // 检查是否是乐观锁冲突
     if (error instanceof Error && error.message.includes('已被其他用户修改')) {
-      ElMessageBox.alert(
-        '该配置已被其他用户修改，请刷新页面后重试',
-        '数据冲突',
-        { type: 'warning' }
-      )
+      ElMessageBox.alert('该配置已被其他用户修改，请刷新页面后重试', '数据冲突', {
+        type: 'warning',
+      })
     }
   } finally {
     ;(config as any)._toggling = false

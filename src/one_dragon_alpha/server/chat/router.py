@@ -1,16 +1,47 @@
 import json
 import os
 from enum import StrEnum
-from typing import Any, AsyncGenerator
+from typing import Annotated, Any, AsyncGenerator
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from one_dragon_alpha.server.dependencies import ContextDep
 from one_dragon_alpha.session.session import Session
 
 router = APIRouter(prefix="/chat")
+
+
+async def get_db_session() -> AsyncSession:
+    """获取数据库会话依赖.
+
+    Yields:
+        AsyncSession: 数据库会话
+
+    Raises:
+        HTTPException: 如果无法获取数据库会话
+    """
+    from one_dragon_alpha.services.mysql import MySQLConnectionService
+
+    try:
+        # 获取 MySQL 连接服务实例
+        mysql_service = MySQLConnectionService()
+        async with await mysql_service.get_session() as session:
+            yield session
+    except Exception as e:
+        from one_dragon_agent.core.system.log import get_logger
+
+        logger = get_logger(__name__)
+        logger.error(f"无法获取数据库会话: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="无法连接到数据库",
+        ) from e
+
+
+SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
 class ChatRequest(BaseModel):
@@ -20,9 +51,14 @@ class ChatRequest(BaseModel):
         session_id: Unique identifier for chat session.
                    Optional - if not provided, a new session will be created.
         user_input: The user's message content.
+        model_config_id: Model configuration ID to use for this request.
+        model_id: Model ID within the configuration to use.
     """
+
     session_id: str | None = None
     user_input: str
+    model_config_id: int
+    model_id: str
 
 
 class GetAnalysisRequest(BaseModel):
@@ -32,6 +68,7 @@ class GetAnalysisRequest(BaseModel):
         session_id: Unique identifier for chat session.
         analyse_id: Analysis ID to retrieve results for.
     """
+
     session_id: str
     analyse_id: int
 
@@ -55,7 +92,9 @@ class ChatResponseType(StrEnum):
 
     MESSAGE_UPDATE = "message_update"  # Message update package (SSE/WebSocket)
     MESSAGE_COMPLETED = "message_completed"  # Final chunk of a message (SSE/WebSocket)
-    RESPONSE_COMPLETED = "response_completed"  # Final chunk of whole response (SSE/WebSocket)
+    RESPONSE_COMPLETED = (
+        "response_completed"  # Final chunk of whole response (SSE/WebSocket)
+    )
     STATUS = "status"  # Status update (WebSocket)
     ERROR = "error"  # Error response (all channels)
 
@@ -68,6 +107,7 @@ class ChatResponse(BaseModel):
         type: Type of response message.
         message: Response message as a dictionary.
     """
+
     session_id: str
     type: str  # ChatResponseType
     message: dict[str, Any]
@@ -107,7 +147,13 @@ def get_session(context: ContextDep, session_id: str | None) -> tuple[str, Sessi
 
 
 async def stream_response_generator(
-    session_id: str, session: Session, user_input: str, context: ContextDep
+    session_id: str,
+    session: Session,
+    user_input: str,
+    model_config_id: int,
+    model_id: str,
+    config,
+    context: ContextDep,
 ) -> AsyncGenerator[str, None]:
     """Generate streaming response chunks.
 
@@ -118,20 +164,33 @@ async def stream_response_generator(
         session_id: Unique identifier for chat session.
         session: Session instance for processing chat message.
         user_input: The user's message content.
+        model_config_id: Model configuration ID.
+        model_id: Model ID within the configuration.
+        config: Model configuration object.
         context: Dependency context providing services.
 
     Yields:
         SSE-formatted response chunks.
     """
     try:
-        async for session_message in session.chat(user_input):
-            response_type = ChatResponseType.RESPONSE_COMPLETED if session_message.response_completed else (
-                ChatResponseType.MESSAGE_COMPLETED if session_message.message_completed else ChatResponseType.MESSAGE_UPDATE
+        async for session_message in session.chat(
+            user_input, model_config_id, model_id, config
+        ):
+            response_type = (
+                ChatResponseType.RESPONSE_COMPLETED
+                if session_message.response_completed
+                else (
+                    ChatResponseType.MESSAGE_COMPLETED
+                    if session_message.message_completed
+                    else ChatResponseType.MESSAGE_UPDATE
+                )
             )
             response = ChatResponse(
                 type=response_type,
                 session_id=session_id,
-                message={} if session_message.msg is None else session_message.msg.to_dict(),
+                message={}
+                if session_message.msg is None
+                else session_message.msg.to_dict(),
             )
             yield f"data: {response.model_dump_json()}\n\n"
     except Exception as e:
@@ -144,7 +203,9 @@ async def stream_response_generator(
 
 
 @router.post("/stream")
-async def chat_stream(request: ChatRequest, context: ContextDep) -> StreamingResponse:
+async def chat_stream(
+    request: ChatRequest, session: SessionDep, context: ContextDep
+) -> StreamingResponse:
     """Process a chat message and return streaming response.
 
     This endpoint provides a streaming interface for chat operations.
@@ -152,31 +213,63 @@ async def chat_stream(request: ChatRequest, context: ContextDep) -> StreamingRes
     Note: Each chunk contains complete current message (cumulative).
 
     Args:
-        request: Chat request containing session ID and user input.
+        request: Chat request containing session ID, user input, model_config_id, and model_id.
+        session: Database session for validating model configuration.
         context: Dependency context providing services.
 
     Returns:
         Streaming response with SSE format.
+
+    Raises:
+        HTTPException: If model configuration is invalid or not found.
     """
-    session_id, session = get_session(context, request.session_id)
+    # 导入 ModelConfigService
+    from one_dragon_agent.core.model.service import ModelConfigService
+
+    # 验证模型配置并获取完整配置(包含 api_key)
+    service = ModelConfigService(session)
+    try:
+        config = await service.get_model_config_internal(request.model_config_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+    # 验证配置是否启用
+    if not config.is_active:
+        raise HTTPException(status_code=400, detail=f"模型配置 '{config.name}' 已禁用")
+
+    # 验证 model_id 是否在配置中
+    model_ids = [m.model_id for m in config.models]
+    if request.model_id not in model_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"模型 ID '{request.model_id}' 不在配置 '{config.name}' 中。可用模型: {model_ids}",
+        )
+
+    # 获取或创建 Session
+    session_id, tushare_session = get_session(context, request.session_id)
 
     return StreamingResponse(
         stream_response_generator(
             session_id=session_id,
-            session=session,
+            session=tushare_session,
             user_input=request.user_input,
-            context=context
+            model_config_id=request.model_config_id,
+            model_id=request.model_id,
+            config=config,
+            context=context,
         ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-        }
+        },
     )
 
 
 @router.post("/get_analyse_by_code_result")
-async def get_analyse_by_code_result(request: GetAnalysisRequest, context: ContextDep) -> dict[str, Any]:
+async def get_analyse_by_code_result(
+    request: GetAnalysisRequest, context: ContextDep
+) -> dict[str, Any]:
     """Get analysis results by session ID and analysis ID.
 
     This endpoint retrieves the analysis results stored in the workspace
@@ -196,24 +289,36 @@ async def get_analyse_by_code_result(request: GetAnalysisRequest, context: Conte
     # Validate session exists
     session = context.session_service.get_session(request.session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail=f"Session not found: {request.session_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Session not found: {request.session_id}"
+        )
 
     # Get workspace directory from environment
     workspace_dir = os.getenv("WORKSPACE_DIR")
     if not workspace_dir:
-        raise HTTPException(status_code=500, detail="WORKSPACE_DIR environment variable not set")
+        raise HTTPException(
+            status_code=500, detail="WORKSPACE_DIR environment variable not set"
+        )
 
     # Construct analysis directory path
-    analyse_dir = os.path.join(workspace_dir, "analyse_by_code", f"{request.session_id}-{request.analyse_id}")
+    analyse_dir = os.path.join(
+        workspace_dir, "analyse_by_code", f"{request.session_id}-{request.analyse_id}"
+    )
 
     # Check if analysis directory exists
     if not os.path.exists(analyse_dir):
-        raise HTTPException(status_code=404, detail=f"Analysis directory not found: {request.analyse_id}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Analysis directory not found: {request.analyse_id}",
+        )
 
     # Check if result.json file exists
     result_file = os.path.join(analyse_dir, "result.json")
     if not os.path.exists(result_file):
-        raise HTTPException(status_code=404, detail=f"Result file not found for analysis: {request.analyse_id}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Result file not found for analysis: {request.analyse_id}",
+        )
 
     try:
         # Read and return the result.json file
@@ -223,10 +328,14 @@ async def get_analyse_by_code_result(request: GetAnalysisRequest, context: Conte
         return {
             "session_id": request.session_id,
             "analyse_id": request.analyse_id,
-            "result": result_data
+            "result": result_data,
         }
 
     except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Invalid JSON in result file: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Invalid JSON in result file: {str(e)}"
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading result file: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error reading result file: {str(e)}"
+        )

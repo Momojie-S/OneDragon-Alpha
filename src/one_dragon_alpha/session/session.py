@@ -68,9 +68,16 @@ class Session:
         This hook is called before agent prints its output, allowing
         us to capture and queue response chunks for streaming.
 
+        重要说明: AgentScope 的流式返回是**累加式**的
+        - 每次调用此 hook 时，msg.content 包含完整的累积文本
+        - 即第 N 次调用时，content = "前N-1次的内容" + "第N次新生成的内容"
+        - 前端应该用新的完整文本替换旧的，而不是追加
+
         Args:
             agent_instance: The agent instance generating output.
             kwargs: Dictionary containing hook parameters.
+                - msg: Msg 对象，包含累加式的完整文本内容
+                - last: 布尔值，指示是否为最后一条消息
 
         Returns:
             None to not modify original arguments.
@@ -96,7 +103,9 @@ class Session:
         except Exception as e:
             print(f"Task failed with exception: {e}")
 
-    async def chat(self, user_input: str) -> AsyncGenerator[SessionMessage, None]:
+    async def chat(
+        self, user_input: str
+    ) -> AsyncGenerator[SessionMessage, None]:
         """Process a chat message and yield streaming responses.
 
         This method processes a user input message and yields SessionMessage
@@ -104,6 +113,8 @@ class Session:
 
         Args:
             user_input: The user's message content.
+            model_config_id: Model configuration ID to use.
+            model_id: Model ID within the configuration to use.
 
         Yields:
             SessionMessage objects containing response chunks and completion status.
@@ -128,7 +139,7 @@ class Session:
             yield SessionMessage(
                 msg=Msg(name=self.agent.id, content=str(e), role="system"),
                 message_completed=False,
-                response_completed=True
+                response_completed=True,
             )
 
     async def interrupt(self) -> None:

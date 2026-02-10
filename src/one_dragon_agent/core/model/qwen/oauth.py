@@ -380,18 +380,21 @@ async def login_qwen_oauth(
         client = QwenOAuthClient()
 
     if open_url is None:
+
         async def _default_open_url(url: str) -> None:
             print(f"\n请打开以下链接进行认证:\n{url}\n")
 
         open_url = _default_open_url
 
     if note is None:
+
         async def _default_note(message: str, title: str) -> None:
             print(f"\n{title}\n{'=' * len(title)}\n{message}\n")
 
         note = _default_note
 
     if progress is None:
+
         class _DefaultProgress:
             """默认进度跟踪器."""
 

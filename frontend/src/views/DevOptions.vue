@@ -10,10 +10,7 @@
       <div class="config-section">
         <div class="section-header">
           <h2 class="section-title">API 模拟配置</h2>
-          <el-tag
-            :type="mockEnabled ? 'success' : 'info'"
-            size="small"
-          >
+          <el-tag :type="mockEnabled ? 'success' : 'info'" size="small">
             {{ mockEnabled ? 'Mock 模式' : '真实 API' }}
           </el-tag>
         </div>
@@ -54,13 +51,7 @@
                 <p>当前所有 API 请求将返回模拟数据。真实后端服务不会被调用。</p>
               </el-alert>
 
-              <el-alert
-                v-else
-                title="真实 API 模式"
-                type="info"
-                :closable="false"
-                show-icon
-              >
+              <el-alert v-else title="真实 API 模式" type="info" :closable="false" show-icon>
                 <p>当前所有 API 请求将发送到真实后端服务（{{ apiUrl }}）。</p>
                 <p v-if="apiStatus === 'error'" class="error-tip">
                   ⚠️ 真实后端服务可能未启动，请确认服务运行状态。
@@ -82,19 +73,11 @@
             <div class="tool-item">
               <h3 class="tool-name">API 状态检查</h3>
               <p class="tool-desc">测试后端 API 连接状态</p>
-              <el-button
-                type="primary"
-                size="small"
-                @click="checkApiStatus"
-                :loading="checkingApi"
-              >
+              <el-button type="primary" size="small" @click="checkApiStatus" :loading="checkingApi">
                 {{ checkingApi ? '检查中...' : '检查状态' }}
               </el-button>
               <div v-if="apiStatus" class="check-result">
-                <el-tag
-                  :type="apiStatus === 'success' ? 'success' : 'danger'"
-                  size="small"
-                >
+                <el-tag :type="apiStatus === 'success' ? 'success' : 'danger'" size="small">
                   {{ apiStatus === 'success' ? '连接正常' : '连接失败' }}
                 </el-tag>
               </div>
@@ -103,25 +86,13 @@
             <div class="tool-item">
               <h3 class="tool-name">清除缓存</h3>
               <p class="tool-desc">清除浏览器本地存储的 Mock 设置</p>
-              <el-button
-                type="warning"
-                size="small"
-                @click="clearCache"
-              >
-                清除缓存
-              </el-button>
+              <el-button type="warning" size="small" @click="clearCache"> 清除缓存 </el-button>
             </div>
 
             <div class="tool-item">
               <h3 class="tool-name">重置配置</h3>
               <p class="tool-desc">恢复所有设置到默认状态</p>
-              <el-button
-                type="danger"
-                size="small"
-                @click="resetConfig"
-              >
-                重置配置
-              </el-button>
+              <el-button type="danger" size="small" @click="resetConfig"> 重置配置 </el-button>
             </div>
           </div>
         </div>
@@ -158,14 +129,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import {
-  ElSwitch,
-  ElTag,
-  ElAlert,
-  ElButton,
-  ElMessage,
-  ElMessageBox
-} from 'element-plus'
+import { ElSwitch, ElTag, ElAlert, ElButton, ElMessage, ElMessageBox } from 'element-plus'
 import { API_BASE_URL, USE_MOCK, ALLOW_RUNTIME_MOCK_SWITCH } from '../config/api'
 
 // Mock 状态管理
@@ -202,13 +166,15 @@ const handleMockChange = (enabled: boolean) => {
   ElMessage({
     message: `Mock 模式已${enabled ? '启用' : '禁用'}`,
     type: enabled ? 'success' : 'info',
-    duration: 3000
+    duration: 3000,
   })
 
   // 触发自定义事件通知其他组件
-  window.dispatchEvent(new CustomEvent('mockModeChanged', {
-    detail: { enabled }
-  }))
+  window.dispatchEvent(
+    new CustomEvent('mockModeChanged', {
+      detail: { enabled },
+    }),
+  )
 
   // 延迟刷新以确保状态保存
   setTimeout(() => {
@@ -222,27 +188,27 @@ const checkApiStatus = async () => {
   try {
     const response = await fetch(`${apiUrl.value}/chat/stream`, {
       method: 'OPTIONS',
-      timeout: 5000
+      timeout: 5000,
     })
 
     if (response.ok || response.status === 405) {
       apiStatus.value = 'success'
       ElMessage({
         message: 'API 连接正常',
-        type: 'success'
+        type: 'success',
       })
     } else {
       apiStatus.value = 'error'
       ElMessage({
         message: 'API 连接失败',
-        type: 'error'
+        type: 'error',
       })
     }
   } catch (error) {
     apiStatus.value = 'error'
     ElMessage({
       message: 'API 连接失败：' + error.message,
-      type: 'error'
+      type: 'error',
     })
   } finally {
     checkingApi.value = false
@@ -252,22 +218,18 @@ const checkApiStatus = async () => {
 // 清除缓存
 const clearCache = async () => {
   try {
-    await ElMessageBox.confirm(
-      '确定要清除所有本地存储的 Mock 设置吗？',
-      '确认清除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
+    await ElMessageBox.confirm('确定要清除所有本地存储的 Mock 设置吗？', '确认清除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
 
     localStorage.removeItem('mockEnabled')
     mockEnabled.value = USE_MOCK
 
     ElMessage({
       message: '缓存已清除',
-      type: 'success'
+      type: 'success',
     })
   } catch {
     // 用户取消操作
@@ -284,7 +246,7 @@ const resetConfig = async () => {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
-      }
+      },
     )
 
     localStorage.clear()
@@ -293,7 +255,7 @@ const resetConfig = async () => {
 
     ElMessage({
       message: '配置已重置',
-      type: 'success'
+      type: 'success',
     })
   } catch {
     // 用户取消操作

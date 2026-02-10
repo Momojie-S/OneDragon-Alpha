@@ -16,9 +16,16 @@ export class ChatHttpService {
   /**
    * Send a chat message to the server using HTTP POST with SSE streaming
    * @param userInput User's message content
+   * @param modelConfigId Model configuration ID
+   * @param modelId Model ID within the configuration
    * @param sessionId Optional session ID for existing session
    */
-  async sendChatMessage(userInput: string, sessionId?: string): Promise<void> {
+  async sendChatMessage(
+    userInput: string,
+    modelConfigId: number,
+    modelId: string,
+    sessionId?: string,
+  ): Promise<void> {
     if (this.abortController) {
       // Cancel any ongoing request
       this.abortController.abort()
@@ -43,9 +50,11 @@ export class ChatHttpService {
         },
         body: JSON.stringify({
           session_id: this.sessionId,
-          user_input: userInput
+          user_input: userInput,
+          model_config_id: modelConfigId,
+          model_id: modelId,
         }),
-        signal: this.abortController.signal
+        signal: this.abortController.signal,
       })
 
       if (!response.ok) {
@@ -61,7 +70,6 @@ export class ChatHttpService {
 
       // Read the stream as SSE
       await this.readSSEStream(response.body)
-
     } catch (error) {
       if (error.name === 'AbortError') {
         console.log('Request was aborted')
@@ -207,21 +215,21 @@ export class ChatHttpService {
    * Notify all connected handlers
    */
   private notifyConnected(): void {
-    this.connectedHandlers.forEach(handler => handler())
+    this.connectedHandlers.forEach((handler) => handler())
   }
 
   /**
    * Notify all disconnected handlers
    */
   private notifyDisconnected(): void {
-    this.disconnectedHandlers.forEach(handler => handler())
+    this.disconnectedHandlers.forEach((handler) => handler())
   }
 
   /**
    * Notify all error handlers
    */
   private notifyError(error: any): void {
-    this.errorHandlers.forEach(handler => handler(error))
+    this.errorHandlers.forEach((handler) => handler(error))
   }
 
   /**

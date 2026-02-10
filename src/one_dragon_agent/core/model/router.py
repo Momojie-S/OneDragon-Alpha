@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """通用模型配置 API 路由."""
 
+import os
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from sqlalchemy import delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from one_dragon_agent.core.model.models import (
@@ -14,6 +16,7 @@ from one_dragon_agent.core.model.models import (
     TestConnectionRequest,
     TestConnectionResponse,
 )
+from one_dragon_agent.core.model.repository import model_configs_table
 from one_dragon_agent.core.model.service import ModelConfigService
 from one_dragon_agent.core.system.log import get_logger
 
@@ -99,9 +102,7 @@ async def list_configs(
     is_active: Annotated[
         bool | None, Query(description="是否启用（可选过滤条件）")
     ] = None,
-    provider: Annotated[
-        str | None, Query(description="提供商（可选过滤条件）")
-    ] = None,
+    provider: Annotated[str | None, Query(description="提供商（可选过滤条件）")] = None,
     session: SessionDep = None,
 ) -> PaginatedModelConfigResponse:
     """获取模型配置列表（支持分页和过滤）.
@@ -138,6 +139,69 @@ async def list_configs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="服务器内部错误",
+        ) from e
+
+
+@router.delete(
+    "/cleanup-test-data",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="清理测试数据（仅测试环境）",
+    include_in_schema=False,  # 不在 OpenAPI 文档中显示
+)
+async def cleanup_test_data(
+    session: SessionDep,
+    x_test_token: Annotated[str, Header(...)],
+    request: Request,
+) -> None:
+    """清理测试期间创建的数据.
+
+    此接口仅用于测试环境，用于清理测试创建的配置数据。
+    通过请求头 x-test-token 验证测试权限。
+
+    清理规则：
+    - 删除名称以 'test_' 或 'E2E' 开头的配置
+    - 删除名称包含 'E2E Test' 的配置
+
+    Args:
+        session: 数据库会话
+        x_test_token: 测试令牌（必须与环境变量 TEST_TOKEN 匹配）
+        request: FastAPI Request 对象，用于获取客户端信息
+
+    Raises:
+        HTTPException: 401 如果测试令牌无效
+    """
+    # 验证测试令牌
+    expected_token = os.getenv("TEST_TOKEN", "test-token-123")
+    if x_test_token != expected_token:
+        client_host = request.client.host if request.client else "unknown"
+        logger.warning(f"无效的测试令牌，来自: {client_host}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的测试令牌",
+        )
+
+    try:
+        # 使用 ORM 表达式 API 构建删除条件（避免 SQL 注入）
+        delete_conditions = or_(
+            model_configs_table.c.name.like("test_%"),
+            model_configs_table.c.name.like("E2E%"),
+            model_configs_table.c.name.like("%E2E Test%"),
+        )
+
+        # 执行删除
+        delete_stmt = delete(model_configs_table).where(delete_conditions)
+        result = await session.execute(delete_stmt)
+        deleted_count = result.rowcount
+        await session.commit()
+
+        logger.info(f"已清理 {deleted_count} 条测试数据")
+
+    except Exception as e:
+        await session.rollback()
+        logger.exception(f"清理测试数据失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"清理失败: {str(e)}",
         ) from e
 
 
