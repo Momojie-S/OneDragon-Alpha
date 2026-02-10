@@ -34,9 +34,7 @@ describe('ModelSelector.vue', () => {
       name: 'OpenAI GPT-4',
       provider: 'openai',
       base_url: 'https://api.openai.com',
-      models: [
-        { model_id: 'gpt-4', support_vision: true, support_thinking: true },
-      ],
+      models: [{ model_id: 'gpt-4', support_vision: true, support_thinking: true }],
       is_active: true,
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
@@ -82,7 +80,7 @@ describe('ModelSelector.vue', () => {
       mockGetActiveModelConfigs.mockReturnValue(
         new Promise((resolve) => {
           resolvePromise = resolve
-        })
+        }),
       )
 
       const wrapper = mount(ModelSelector, {

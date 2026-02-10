@@ -24,7 +24,7 @@ export class ChatHttpService {
     userInput: string,
     modelConfigId: number,
     modelId: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<void> {
     if (this.abortController) {
       // Cancel any ongoing request

@@ -409,7 +409,7 @@ const sendMessage = () => {
     chatHttpService.sendChatMessage(
       inputMessage.value,
       selectedModelConfigId.value,
-      selectedModelId.value
+      selectedModelId.value,
     )
 
     // 设置加载状态

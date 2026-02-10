@@ -5,9 +5,12 @@
 
 import { test, expect, Page } from '@playwright/test'
 
-// 测试数据 - 使用时间戳确保唯一性
+// 测试令牌（从环境变量读取）
+const TEST_TOKEN = process.env.TEST_TOKEN || 'test-token-123'
+
+// 测试数据 - 使用时间戳确保唯一性，使用 test_ 前缀
 const getTestConfig = () => ({
-  name: `E2E 测试配置_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+  name: `test_e2e_config_${Date.now()}_${Math.random().toString(36).substring(7)}`,
   provider: 'openai',
   baseUrl: 'https://api.deepseek.com',
   apiKey: 'sk-test-e2e-123456',
@@ -15,6 +18,27 @@ const getTestConfig = () => ({
     { modelId: 'deepseek-chat', supportVision: true, supportThinking: false }
   ]
 })
+
+/**
+ * 清理测试数据
+ */
+async function cleanupTestData(page: Page) {
+  try {
+    const response = await page.request.delete({
+      url: 'http://localhost:21003/api/models/configs/cleanup-test-data',
+      headers: {
+        'x-test-token': TEST_TOKEN,
+      },
+    })
+    if (response.ok()) {
+      console.log('✓ 测试数据清理成功')
+    } else {
+      console.warn(`⚠ 测试数据清理失败: ${response.status()}`)
+    }
+  } catch (error) {
+    console.warn(`⚠ 测试数据清理出错: ${error}`)
+  }
+}
 
 /**
  * 登录/认证（如果需要）
@@ -46,6 +70,11 @@ async function navigateToModelManagement(page: Page) {
 }
 
 test.describe('模型配置管理', () => {
+  // 在每个测试后清理测试数据
+  test.afterEach(async ({ page }) => {
+    await cleanupTestData(page)
+  })
+
   test.beforeEach(async ({ page }) => {
     await login(page)
     await navigateToModelManagement(page)
@@ -166,8 +195,8 @@ test.describe('模型配置管理', () => {
       // 等待编辑对话框打开
       await expect(page.locator('.el-dialog').filter({ hasText: '编辑配置' }).first()).toBeVisible()
 
-      // 修改配置名称
-      const newName = `更新_${Date.now()}`
+      // 修改配置名称 - 使用 test_ 前缀
+      const newName = `test_updated_${Date.now()}`
       await page.fill('input[placeholder*="配置名称"]', newName)
 
       // 保存 - 使用 first() 定位主对话框的按钮
@@ -312,6 +341,11 @@ test.describe('模型配置管理', () => {
 })
 
 test.describe('模型配置对话框', () => {
+  // 在每个测试后清理测试数据
+  test.afterEach(async ({ page }) => {
+    await cleanupTestData(page)
+  })
+
   test.beforeEach(async ({ page }) => {
     await login(page)
     await navigateToModelManagement(page)

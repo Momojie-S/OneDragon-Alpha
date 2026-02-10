@@ -107,6 +107,13 @@ class TushareSession(Session):
         # 替换 Agent
         self.agent = new_agent
 
+        # 重新注册 hook 到新的 Agent
+        self.agent.register_instance_hook(
+            hook_type="pre_print",
+            hook_name="chat_capture",
+            hook=self._pre_print_hook,
+        )
+
         # 更新缓存
         self._current_model_config_id = config.id
         self._current_model_id = model_id
@@ -137,27 +144,9 @@ class TushareSession(Session):
             self._current_model_id != model_id):
             self.set_model(config, model_id)
 
-        # 直接处理聊天消息(不调用父类方法，因为参数不匹配)
-        try:
-            msg = Msg(name="user", content=user_input, role="user")
-            agent_task = asyncio.create_task(self.agent(msg))
-            agent_task.add_done_callback(self._on_response_completed)
-
-            while True:
-                msg = await self._get_chunk()
-                yield msg
-                if msg.response_completed:
-                    break
-
-            if not agent_task.done():
-                await agent_task
-
-        except Exception as e:
-            yield SessionMessage(
-                msg=Msg(name=self.agent.id, content=str(e), role="system"),
-                message_completed=False,
-                response_completed=True,
-            )
+        # 调用父类的 chat 方法（不传递 model_config_id 和 model_id）
+        async for message in super().chat(user_input):
+            yield message
 
     async def display_analyse_by_code_result(
         self,

@@ -192,13 +192,20 @@ const fetchModelConfigs = async () => {
     }
 
     // 如果没有有效的保存选择，且启用了 autoSelect，自动选择第一个
-    if ((!selectedConfigId.value || !selectedModelId.value) && props.autoSelect && modelConfigs.value.length > 0) {
+    if (
+      (!selectedConfigId.value || !selectedModelId.value) &&
+      props.autoSelect &&
+      modelConfigs.value.length > 0
+    ) {
       const firstConfig = modelConfigs.value[0]
       selectedConfigId.value = firstConfig.id
       if (firstConfig.models.length > 0) {
         selectedModelId.value = firstConfig.models[0].model_id
         saveSelection(firstConfig.id, firstConfig.models[0].model_id)
-        emit('change', { model_config_id: firstConfig.id, model_id: firstConfig.models[0].model_id })
+        emit('change', {
+          model_config_id: firstConfig.id,
+          model_id: firstConfig.models[0].model_id,
+        })
       }
     }
   } catch (err) {
@@ -256,7 +263,7 @@ watch(
       selectedConfigId.value = newVal
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
@@ -266,7 +273,7 @@ watch(
       selectedModelId.value = newVal
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -289,9 +296,7 @@ watch(
         :value="config.id"
         :title="config.name"
       >
-        <span class="option-text">
-          {{ config.name }} ({{ config.models.length }} models)
-        </span>
+        <span class="option-text"> {{ config.name }} ({{ config.models.length }} models) </span>
       </el-option>
     </el-select>
 
