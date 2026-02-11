@@ -49,9 +49,17 @@ model_configs_table = Table(
     Column("is_active", Boolean, default=True),
     Column("created_at", DateTime, default=datetime.now),
     Column("updated_at", DateTime, default=datetime.now, onupdate=datetime.now),
+    # OAuth 相关字段（003 迁移添加）
+    Column("oauth_access_token", Text, nullable=True),
+    Column("oauth_token_type", String(50), nullable=True),
+    Column("oauth_refresh_token", Text, nullable=True),
+    Column("oauth_expires_at", BigInteger, nullable=True),
+    Column("oauth_scope", String(500), nullable=True),
+    Column("oauth_metadata", JSON, nullable=True),
     Index("idx_name", "name"),
     Index("idx_provider", "provider"),
     Index("idx_is_active", "is_active"),
+    Index("idx_oauth_expires_at", "oauth_expires_at"),
 )
 
 
@@ -211,13 +219,13 @@ class ModelConfigRepository:
         return ModelConfigResponse(**config_data)
 
     async def get_config_internal(self, config_id: int) -> ModelConfigInternal:
-        """根据 ID 查询配置(包含 api_key,仅供内部使用).
+        """根据 ID 查询配置(包含 api_key 和 OAuth 字段,仅供内部使用).
 
         Args:
             config_id: 配置 ID
 
         Returns:
-            包含 api_key 的内部配置对象
+            包含 api_key 和 OAuth 字段的内部配置对象
 
         Raises:
             ValueError: 如果配置不存在
@@ -242,7 +250,19 @@ class ModelConfigRepository:
             else row_dict["models"]
         )
 
-        # 构建 ModelConfigInternal 所需的字典(包含 api_key)
+        # 解析 OAuth metadata（如果存在）
+        oauth_metadata = None
+        if row_dict.get("oauth_metadata"):
+            try:
+                oauth_metadata = (
+                    json.loads(row_dict["oauth_metadata"])
+                    if isinstance(row_dict["oauth_metadata"], str)
+                    else row_dict["oauth_metadata"]
+                )
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        # 构建 ModelConfigInternal 所需的字典(包含 api_key 和 OAuth 字段)
         config_data = {
             "id": row_dict["id"],
             "name": row_dict["name"],
@@ -253,9 +273,118 @@ class ModelConfigRepository:
             "is_active": bool(row_dict["is_active"]),
             "created_at": row_dict["created_at"],
             "updated_at": row_dict["updated_at"],
+            # OAuth 字段
+            "oauth_access_token": row_dict.get("oauth_access_token"),
+            "oauth_token_type": row_dict.get("oauth_token_type"),
+            "oauth_refresh_token": row_dict.get("oauth_refresh_token"),
+            "oauth_expires_at": row_dict.get("oauth_expires_at"),
+            "oauth_scope": row_dict.get("oauth_scope"),
+            "oauth_metadata": oauth_metadata,
         }
 
         return ModelConfigInternal(**config_data)
+
+    async def get_config_with_oauth(self, config_id: int) -> dict:
+        """根据 ID 查询配置(包含 api_key 和 OAuth 字段).
+
+        用于获取包含完整 OAuth token 信息的配置。
+
+        Args:
+            config_id: 配置 ID
+
+        Returns:
+            包含 api_key 和 OAuth 字段的配置字典
+
+        Raises:
+            ValueError: 如果配置不存在
+        """
+        table = model_configs_table
+
+        stmt = select(table).where(table.c.id == config_id)
+        result = await self._session.execute(stmt)
+        row = result.fetchone()
+
+        if not row:
+            msg = f"配置 ID {config_id} 不存在"
+            raise ValueError(msg)
+
+        # 将 SQLAlchemy Row 对象转换为字典
+        row_dict = dict(row._mapping)
+
+        # 解析 JSON 字段
+        models_data = (
+            json.loads(row_dict["models"])
+            if isinstance(row_dict["models"], str)
+            else row_dict["models"]
+        )
+
+        # 解析 OAuth metadata
+        oauth_metadata = None
+        if row_dict.get("oauth_metadata"):
+            try:
+                oauth_metadata = (
+                    json.loads(row_dict["oauth_metadata"])
+                    if isinstance(row_dict["oauth_metadata"], str)
+                    else row_dict["oauth_metadata"]
+                )
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        return {
+            "id": row_dict["id"],
+            "name": row_dict["name"],
+            "provider": row_dict["provider"],
+            "base_url": row_dict["base_url"],
+            "api_key": row_dict["api_key"],
+            "models": models_data,
+            "is_active": bool(row_dict["is_active"]),
+            "created_at": row_dict["created_at"],
+            "updated_at": row_dict["updated_at"],
+            # OAuth 字段
+            "oauth_access_token": row_dict.get("oauth_access_token"),
+            "oauth_token_type": row_dict.get("oauth_token_type"),
+            "oauth_refresh_token": row_dict.get("oauth_refresh_token"),
+            "oauth_expires_at": row_dict.get("oauth_expires_at"),
+            "oauth_scope": row_dict.get("oauth_scope"),
+            "oauth_metadata": oauth_metadata,
+        }
+
+    async def update_oauth_token(
+        self, config_id: int, token_data: dict
+    ) -> None:
+        """更新配置的 OAuth token.
+
+        Args:
+            config_id: 配置 ID
+            token_data: OAuth token 数据字典
+
+        Raises:
+            ValueError: 如果配置不存在
+        """
+        table = model_configs_table
+
+        stmt = (
+            update(table)
+            .where(table.c.id == config_id)
+            .values(
+                oauth_access_token=token_data.get("access_token"),
+                oauth_token_type=token_data.get("token_type", "Bearer"),
+                oauth_refresh_token=token_data.get("refresh_token"),
+                oauth_expires_at=token_data.get("expires_at"),
+                oauth_scope=token_data.get("scope"),
+                oauth_metadata=token_data.get("metadata"),
+                updated_at=datetime.now(),
+            )
+        )
+
+        result = await self._session.execute(stmt)
+        await self._session.commit()
+
+        if result.rowcount == 0:
+            msg = f"配置 ID {config_id} 不存在"
+            raise ValueError(msg)
+
+        logger.info(f"配置 {config_id} 的 OAuth token 已更新")
 
     async def get_configs(
         self,

@@ -84,14 +84,53 @@ class ModelConfigService:
             ValueError: 如果验证失败
         """
         # 验证 provider 字段
-        if config.provider != "openai":
-            msg = f"当前仅支持 provider='openai'，收到: {config.provider}"
+        if config.provider not in ("openai", "qwen"):
+            msg = f"不支持的 provider: {config.provider}"
+            raise ValueError(msg)
+
+        # OpenAI provider 需要 api_key
+        if config.provider == "openai" and not config.api_key:
+            msg = "OpenAI provider 必须提供 api_key"
+            raise ValueError(msg)
+
+        # Qwen provider 需要 oauth_token
+        if config.provider == "qwen" and not config.oauth_token:
+            msg = "Qwen provider 必须提供 oauth_token"
             raise ValueError(msg)
 
         # 验证配置名称唯一性
         await self.validate_config_unique(config.name)
 
-        return await self._repository.create_config(config)
+        # 创建配置
+        created_config = await self._repository.create_config(config)
+
+        # 如果是 Qwen provider 且有 oauth_token，保存到数据库
+        if config.provider == "qwen" and config.oauth_token:
+            from one_dragon_agent.core.model.qwen.token_encryption import (
+                get_token_encryption,
+            )
+
+            encryption = get_token_encryption()
+            token_data = {
+                "access_token": encryption.encrypt(config.oauth_token["access_token"]),
+                "token_type": "Bearer",
+                "refresh_token": encryption.encrypt(config.oauth_token["refresh_token"]),
+                "expires_at": config.oauth_token["expires_at"],
+                "scope": "openid profile email model.completion",
+                "metadata": None,
+            }
+            if config.oauth_token.get("resource_url"):
+                import json
+
+                token_data["metadata"] = json.dumps(
+                    {"resource_url": config.oauth_token["resource_url"]}
+                )
+
+            await self._repository.update_oauth_token(
+                created_config.id, token_data
+            )
+
+        return created_config
 
     async def get_model_config_internal(self, config_id: int) -> ModelConfigInternal:
         """获取包含 api_key 的完整配置(仅供内部使用).
@@ -145,8 +184,8 @@ class ModelConfigService:
             分页响应
         """
         # 验证 provider 字段
-        if provider is not None and provider != "openai":
-            msg = f"当前仅支持 provider='openai'，收到: {provider}"
+        if provider is not None and provider not in ("openai", "qwen"):
+            msg = f"不支持的 provider: {provider}"
             raise ValueError(msg)
 
         # 限制 page_size 最大值
@@ -182,8 +221,8 @@ class ModelConfigService:
             ValueError: 如果验证失败或配置不存在
         """
         # 验证 provider 字段
-        if config_update.provider is not None and config_update.provider != "openai":
-            msg = f"当前仅支持 provider='openai'，收到: {config_update.provider}"
+        if config_update.provider is not None and config_update.provider not in ("openai", "qwen"):
+            msg = f"不支持的 provider: {config_update.provider}"
             raise ValueError(msg)
 
         return await self._repository.update_config(config_id, config_update)

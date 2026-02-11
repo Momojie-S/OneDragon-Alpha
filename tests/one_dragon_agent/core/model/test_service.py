@@ -88,22 +88,25 @@ async def test_test_connection_success() -> None:
     mock_session = AsyncMock(spec=AsyncSession)
     service = ModelConfigService(mock_session)
 
-    # 模拟 POST 请求返回聊天响应
-    with patch("httpx.AsyncClient.post") as mock_post:
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "choices": [
-                {
-                    "message": {
-                        "content": "Hello! How can I help you today?"
-                    }
-                }
-            ]
-        }
-        mock_post.return_value = mock_response
+    # 创建模拟的响应消息
+    mock_response_msg = MagicMock()
+    mock_response_msg.get_text_content.return_value = "Hello! How can I help you today?"
+
+    # Mock ModelFactory.create_model 返回模拟模型
+    mock_model = MagicMock()
+
+    # Mock ReActAgent
+    mock_agent = AsyncMock()
+    mock_agent.return_value = mock_response_msg
+    mock_agent.set_console_output_enabled = MagicMock()
+
+    # 使用多个 patch 来模拟不同的组件
+    # 注意：需要 patch 在导入时的位置
+    with patch("one_dragon_agent.core.model.model_factory.ModelFactory.create_model", return_value=mock_model), \
+         patch("agentscope.agent.ReActAgent", return_value=mock_agent):
 
         result = await service.test_connection(request)
 
     assert result.success is True
     assert "连接成功" in result.message
+    assert "Hello! How can I help you today?" in result.message

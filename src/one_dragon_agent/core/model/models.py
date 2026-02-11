@@ -103,15 +103,17 @@ class ModelConfigCreate(ModelConfigBase):
     """创建模型配置请求模型.
 
     Attributes:
-        api_key: API 密钥
+        api_key: API 密钥（OpenAI 必需，Qwen 可选）
+        oauth_token: OAuth token（Qwen 使用）
     """
 
-    api_key: str = Field(..., min_length=1, description="API 密钥")
+    api_key: str = Field(default="", description="API 密钥（OpenAI 必需，Qwen 可选）")
+    oauth_token: dict | None = Field(None, description="OAuth token（Qwen 使用）")
 
     @field_validator("api_key")
     @classmethod
     def api_key_must_not_be_empty(cls, v: str) -> str:
-        """验证 API key 不为空.
+        """验证 API key 不为空（仅针对 OpenAI provider）.
 
         Args:
             v: API key
@@ -120,10 +122,10 @@ class ModelConfigCreate(ModelConfigBase):
             验证后的 API key
 
         Raises:
-            ValueError: 如果 API key 为空
+            ValueError: 如果 API key 为空（但会在 provider 验证时检查）
         """
-        if not v or not v.strip():
-            raise ValueError("API key 不能为空")
+        if not v:
+            return ""
         return v.strip()
 
 
@@ -222,7 +224,7 @@ class ModelConfigResponse(ModelConfigBase):
 
 
 class ModelConfigInternal(ModelConfigBase):
-    """模型配置内部响应模型（包含 api_key）.
+    """模型配置内部响应模型（包含 api_key 和 OAuth 字段）.
 
     此模型仅用于内部服务间调用，不应直接返回给前端。
 
@@ -231,12 +233,25 @@ class ModelConfigInternal(ModelConfigBase):
         api_key: API 密钥
         created_at: 创建时间
         updated_at: 更新时间
+        oauth_access_token: OAuth 访问令牌（加密）
+        oauth_token_type: OAuth 令牌类型
+        oauth_refresh_token: OAuth 刷新令牌（加密）
+        oauth_expires_at: OAuth 过期时间戳（毫秒）
+        oauth_scope: OAuth 授权范围
+        oauth_metadata: OAuth 元数据
     """
 
     id: int = Field(..., description="配置 ID")
-    api_key: str = Field(..., description="API 密钥")
+    api_key: str = Field(default="", description="API 密钥")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
+    # OAuth 字段（用于 Qwen provider）
+    oauth_access_token: str | None = Field(None, description="OAuth 访问令牌（加密）")
+    oauth_token_type: str | None = Field(None, description="OAuth 令牌类型")
+    oauth_refresh_token: str | None = Field(None, description="OAuth 刷新令牌（加密）")
+    oauth_expires_at: int | None = Field(None, description="OAuth 过期时间戳（毫秒）")
+    oauth_scope: str | None = Field(None, description="OAuth 授权范围")
+    oauth_metadata: dict | None = Field(None, description="OAuth 元数据")
 
     model_config = {"from_attributes": True}
 

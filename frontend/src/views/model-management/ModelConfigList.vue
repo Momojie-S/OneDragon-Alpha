@@ -39,6 +39,7 @@
           style="width: 150px"
         >
           <el-option label="OpenAI" value="openai" />
+          <el-option label="Qwen" value="qwen" />
         </el-select>
       </div>
 
@@ -53,7 +54,9 @@
         <el-table-column prop="name" label="配置名称" width="200" />
         <el-table-column prop="provider" label="Provider" width="120">
           <template #default="{ row }">
-            <el-tag>{{ row.provider }}</el-tag>
+            <el-tag :type="row.provider === 'openai' ? 'primary' : 'success'">
+              {{ row.provider === 'openai' ? 'OpenAI' : 'Qwen' }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="base_url" label="Base URL" min-width="250" show-overflow-tooltip />

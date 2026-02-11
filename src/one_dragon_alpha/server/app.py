@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from one_dragon_alpha.server.chat.router import router as chat_router
 from one_dragon_alpha.server.context import OneDragonAlphaContext
 from one_dragon_agent.core.model.router import router as model_config_router
+from one_dragon_agent.core.model.qwen.oauth_router import router as qwen_oauth_router
 
 
 @asynccontextmanager
@@ -54,6 +55,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(chat_router)
 app.include_router(model_config_router)
+app.include_router(qwen_oauth_router)
 
 
 if __name__ == "__main__":

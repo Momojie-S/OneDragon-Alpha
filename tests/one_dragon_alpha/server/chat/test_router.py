@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from one_dragon_alpha.server.chat.router import ChatRequest, router
+from one_dragon_alpha.server.chat.router import ChatRequest, router, get_db_session
 from one_dragon_agent.core.model.models import ModelConfigInternal, ModelInfo
 from one_dragon_agent.core.system.log import get_logger
 
@@ -112,22 +112,26 @@ async def test_nonexistent_config_id_returns_404(mock_service_class, mock_config
     mock_service.get_model_config_internal.side_effect = ValueError("配置不存在")
     mock_service_class.return_value = mock_service
 
-    # 创建测试客户端
+    # 创建测试客户端，并覆盖数据库依赖
     from fastapi import FastAPI
 
     app = FastAPI()
     app.include_router(router)
+    app.dependency_overrides[get_db_session] = lambda: mock_db_session
 
-    with TestClient(app) as client:
-        response = client.post(
-            "/chat/stream",
-            json={
-                "session_id": "test_session",
-                "user_input": "Hello",
-                "model_config_id": 999,  # 不存在的配置
-                "model_id": "gpt-4",
-            },
-        )
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/chat/stream",
+                json={
+                    "session_id": "test_session",
+                    "user_input": "Hello",
+                    "model_config_id": 999,  # 不存在的配置
+                    "model_id": "gpt-4",
+                },
+            )
+    finally:
+        app.dependency_overrides = {}
 
     # 验证返回 404 错误
     assert response.status_code == 404
@@ -143,22 +147,26 @@ async def test_disabled_config_id_returns_400(mock_service_class, mock_disabled_
     mock_service.get_model_config_internal.return_value = mock_disabled_config
     mock_service_class.return_value = mock_service
 
-    # 创建测试客户端
+    # 创建测试客户端，并覆盖数据库依赖
     from fastapi import FastAPI
 
     app = FastAPI()
     app.include_router(router)
+    app.dependency_overrides[get_db_session] = lambda: mock_db_session
 
-    with TestClient(app) as client:
-        response = client.post(
-            "/chat/stream",
-            json={
-                "session_id": "test_session",
-                "user_input": "Hello",
-                "model_config_id": 2,  # 已禁用的配置
-                "model_id": "gpt-4",
-            },
-        )
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/chat/stream",
+                json={
+                    "session_id": "test_session",
+                    "user_input": "Hello",
+                    "model_config_id": 2,  # 已禁用的配置
+                    "model_id": "gpt-4",
+                },
+            )
+    finally:
+        app.dependency_overrides = {}
 
     # 验证返回 400 错误
     assert response.status_code == 400
@@ -175,26 +183,30 @@ async def test_model_id_not_in_config_returns_400(mock_service_class, mock_confi
     mock_service.get_model_config_internal.return_value = mock_config
     mock_service_class.return_value = mock_service
 
-    # 创建测试客户端
+    # 创建测试客户端，并覆盖数据库依赖
     from fastapi import FastAPI
 
     app = FastAPI()
     app.include_router(router)
+    app.dependency_overrides[get_db_session] = lambda: mock_db_session
 
-    with TestClient(app) as client:
-        response = client.post(
-            "/chat/stream",
-            json={
-                "session_id": "test_session",
-                "user_input": "Hello",
-                "model_config_id": 1,
-                "model_id": "invalid-model",  # 不在配置中的模型
-            },
-        )
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/chat/stream",
+                json={
+                    "session_id": "test_session",
+                    "user_input": "Hello",
+                    "model_config_id": 1,
+                    "model_id": "invalid-model",  # 不在配置中的模型
+                },
+            )
+    finally:
+        app.dependency_overrides = {}
 
     # 验证返回 400 错误
     assert response.status_code == 400
-    assert "不在配置中" in response.json()["detail"]
+    assert "不在配置" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -211,30 +223,34 @@ async def test_valid_config_and_model_id_succeeds(
     mock_service_class.return_value = mock_service
 
     # 模拟 Session
-    mock_session = MagicMock()
-    mock_session.chat = AsyncMock()
+    mock_tushare_session = MagicMock()
+    mock_tushare_session.chat = AsyncMock()
     async def mock_chat_gen():
         from one_dragon_alpha.session.session_message import SessionMessage
         yield SessionMessage(None, False, True)
-    mock_session.chat.return_value = mock_chat_gen()
-    mock_get_session.return_value = ("test_session", mock_session)
+    mock_tushare_session.chat.return_value = mock_chat_gen()
+    mock_get_session.return_value = ("test_session", mock_tushare_session)
 
-    # 创建测试客户端
+    # 创建测试客户端，并覆盖数据库依赖
     from fastapi import FastAPI
 
     app = FastAPI()
     app.include_router(router)
+    app.dependency_overrides[get_db_session] = lambda: mock_db_session
 
-    with TestClient(app) as client:
-        response = client.post(
-            "/chat/stream",
-            json={
-                "session_id": "test_session",
-                "user_input": "Hello",
-                "model_config_id": 1,
-                "model_id": "gpt-4",
-            },
-        )
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/chat/stream",
+                json={
+                    "session_id": "test_session",
+                    "user_input": "Hello",
+                    "model_config_id": 1,
+                    "model_id": "gpt-4",
+                },
+            )
+    finally:
+        app.dependency_overrides = {}
 
     # 验证返回 200（成功）
     # 注意：由于是流式响应，TestClient 可能无法完全模拟

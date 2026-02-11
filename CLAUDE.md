@@ -16,6 +16,7 @@ OneDragon-Alpha/
 ├── src/ # Python后端代码主入口
 ├── frontend/ # Vue前端代码
 ├── docs/ # 项目文档
+├── .env  # 存放了各种环境变量 包括数据库密码等
 ```
 
 ### 环境说明
@@ -23,14 +24,13 @@ OneDragon-Alpha/
 - 当前项目没有区分开发和生产数据库，所有环境共用同一个数据库实例。因此测试数据清理尤为重要，必须确保测试后正确清理，避免影响开发和使用体验。
 - 无论是使用工具还是测试代码，需要创建临时文件时，都在项目根目录下的 .temp 文件夹下创建。
 
+### 环境变量设置
+
+- 项目所需的环境变量都能在 `.env` 文件中找到。
+- 使用 `uv run` 命令时，必须使用 `--env-file .env` 参数来加载环境变量。
+- 不要手动设置 `PYTHONPATH`，使用 `.env` 来加载。
+
 ## 参考命令
-
-### 开发环境设置
-
-> **重要提示**: 使用 `uv run` 命令时，**必须**使用 `--env-file .env` 参数来加载环境变量。
-> 环境变量中包含 `PYTHONPATH`（指向 src 目录）以及其他必要的配置信息。
-> - **正确**: `uv run --env-file .env pytest tests/`
-> - **错误**: `uv run pytest tests/` （会缺少环境变量，导致导入失败）
 
 ```bash
 uv sync --group dev # 安装依赖
@@ -137,7 +137,7 @@ uv run ruff format src/ tests/    # 代码格式化
 
 - 你可以先制定测试计划，或者只在测试文件上写注释说明需要测试的场景。
 - 在编写具体测试代码前，你必须要先使用 chrome-devtools 工具进行调试，确保前端运作和测试预期一致。如果不一致，则可能是代码问题或者测试计划问题，进行修改。
-- chrome-devtools工具需要先启动chrome实例，并固定连接9222端口。你需要先判断chrome实例是否在运行，如果没有，你必须使用 `chromium-browser --headless --remote-debugging-port=9222 --no-sandbox > /dev/null 2>&1 &` 在后台启动一个chrome实例。
+- chrome-devtools工具需要先启动chrome实例，并固定连接9222端口。你需要先判断chrome实例是否在运行，如果没有，你必须使用 `chromium-browser --headless --remote-debugging-port=9222 --no-sandbox > /dev/null 2>&1` 在后台启动一个chrome实例。
 - 使用 chrome-devtools 调试成功后，再编写具体的测试代码。
 - 测试过程遇到问题时，应积极使用 chrome-devtools 工具进行调试。
 - 进行 Playwright 的 E2E 测试时，必须使用 headless 模式。
@@ -153,4 +153,6 @@ uv run ruff format src/ tests/    # 代码格式化
 - opsx - 保持使用 opsx 工具，按 spec-driven 的方式进行开发。
 - context7 - 积极使用 context7 工具搜索使用文档。例如，设计时需要了解依赖库的能力、开发测试时遇到调用方法不存在、参数个数不一致、参数类型不一致等场景。
 - tushare-docs-mcp - 对于tushare库，是用 tushare-docs-mcp 工具进行搜索文档，而不是 context7。
+- bash - 需要临时运行服务时，使用Bash工具原生的后台运行能力，而不是在命令中增加 `nohup` 或者 后缀 `&` 的方式运行。
+- agent team - 启动 agent team 时，leader需要同步更新opsx状态。
 

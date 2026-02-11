@@ -29,9 +29,9 @@ export interface ModelConfig {
   id: number
   /** 配置名称 */
   name: string
-  /** 提供商（当前仅支持 "openai"） */
+  /** 提供商（支持 "openai" 或 "qwen"） */
   provider: string
-  /** API 基础 URL */
+  /** API 基础 URL（OpenAI 必需，Qwen 为空） */
   base_url: string
   /** 模型列表 */
   models: ModelInfo[]
@@ -49,11 +49,11 @@ export interface ModelConfig {
 export interface CreateModelConfigRequest {
   /** 配置名称 */
   name: string
-  /** 提供商（仅支持 "openai"） */
+  /** 提供商（支持 "openai" 或 "qwen"） */
   provider: string
-  /** API 基础 URL */
+  /** API 基础 URL（OpenAI 必需，Qwen 为空字符串） */
   base_url: string
-  /** API 密钥 */
+  /** API 密钥（OpenAI 必需，Qwen 为空字符串） */
   api_key: string
   /** 模型列表 */
   models: ModelInfo[]
@@ -67,9 +67,9 @@ export interface CreateModelConfigRequest {
 export interface UpdateModelConfigRequest {
   /** 配置名称 */
   name?: string
-  /** 提供商（仅支持 "openai"） */
+  /** 提供商（支持 "openai" 或 "qwen"） */
   provider?: string
-  /** API 基础 URL */
+  /** API 基础 URL（OpenAI 必需，Qwen 为空字符串） */
   base_url?: string
   /** API 密钥（留空则不修改） */
   api_key?: string
