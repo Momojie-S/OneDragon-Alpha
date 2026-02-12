@@ -454,13 +454,24 @@ watch(
         Object.assign(formData, {
           name: props.config.name,
           provider: props.config.provider,
-          base_url: props.config.base_url,
+          base_url: props.config.provider === 'qwen' ? '' : props.config.base_url, // Qwen 不需要 base_url
           api_key: '', // API Key 不回填
           models: [...props.config.models],
           is_active: props.config.is_active,
           updated_at: props.config.updated_at,
         })
       }
+    }
+  },
+)
+
+// 监听 provider 变化，如果是 qwen 则清空 base_url
+watch(
+  () => formData.provider,
+  (newProvider) => {
+    if (newProvider === 'qwen') {
+      formData.base_url = ''
+      formData.api_key = ''
     }
   },
 )
@@ -759,7 +770,7 @@ const handleSubmit = async () => {
       const updateData: UpdateModelConfigRequest = {
         name: formData.name,
         provider: formData.provider,
-        base_url: formData.base_url,
+        base_url: formData.provider === 'qwen' ? '' : formData.base_url, // Qwen 不需要 base_url
         models: formData.models,
         is_active: formData.is_active,
         updated_at: formData.updated_at,

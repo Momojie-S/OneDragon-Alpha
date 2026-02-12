@@ -9,7 +9,7 @@
 - **WHEN** 用户发送 POST 请求到 /api/models/configs
 - **AND** 请求体包含有效的配置数据
 - **THEN** 系统 SHALL 返回 201 Created 状态码
-- **AND** 响应体包含完整的配置信息（api_key 不在响应中返回）
+- **AND** 响应体包含完整的配置信息（不返回 api_key 字段）
 - **AND** 响应体包含新创建配置的 ID
 
 #### Scenario: 创建配置失败 - 名称重复
@@ -46,7 +46,7 @@
 - **WHEN** 用户发送 GET 请求到 /api/models/configs
 - **THEN** 系统 SHALL 返回 200 OK 状态码
 - **AND** 响应体为分页对象，包含 total、page、page_size、items 字段
-- **AND** items 为模型配置数组，api_key 不在响应中返回
+- **AND** items 为模型配置数组，不包含 api_key 字段
 - **AND** items SHALL 按 created_at 倒序排列
 
 #### Scenario: 过滤启用的配置
@@ -57,23 +57,7 @@
 #### Scenario: 空列表
 - **WHEN** 数据库中没有任何模型配置
 - **THEN** 系统 SHALL 返回 200 OK 状态码
-- **AND** 响应体为分页对象，items 为空数组
-
-#### Scenario: 无效的分页参数
-- **WHEN** 用户发送 GET 请求到 /api/models/configs?page_size=200
-- **AND** page_size 超过最大值 100
-- **THEN** 系统 SHALL 返回 400 Bad Request 状态码
-- **AND** 响应体包含错误信息，提示 page_size 超出范围
-
-#### Scenario: 负数分页参数
-- **WHEN** 用户发送 GET 请求到 /api/models/configs?page=-1
-- **THEN** 系统 SHALL 返回 400 Bad Request 状态码
-
-#### Scenario: 无效的过滤参数
-- **WHEN** 用户发送 GET 请求到 /api/models/configs?is_active=invalid
-- **THEN** 系统 SHALL 返回 400 Bad Request 状态码
-- **AND** 响应体包含错误信息，提示 is_active 参数无效
-
+- **AND** 响应体包含空数组
 
 ### Requirement: 获取单个模型配置 API
 系统 SHALL 提供 GET /api/models/configs/{id} 接口用于获取特定模型配置。
@@ -82,7 +66,7 @@
 - **WHEN** 用户发送 GET 请求到 /api/models/configs/{id}
 - **AND** 该 ID 的配置存在
 - **THEN** 系统 SHALL 返回 200 OK 状态码
-- **AND** 响应体包含配置信息（api_key 不在响应中返回）
+- **AND** 响应体包含完整的配置信息（不返回 api_key 字段）
 
 #### Scenario: 配置不存在
 - **WHEN** 用户发送 GET 请求到 /api/models/configs/{id}
@@ -96,25 +80,6 @@
 - **THEN** 系统 SHALL 返回 400 Bad Request 状态码
 - **AND** 响应体包含错误信息，提示 ID 格式不正确
 
-
-### Requirement: 认证和授权
-系统 SHALL 对所有 API 端点进行身份认证和授权验证。
-
-#### Scenario: 缺少认证凭据
-- **WHEN** 用户发送请求但未提供有效的认证凭据
-- **THEN** 系统 SHALL 返回 401 Unauthorized 状态码
-- **AND** 响应体包含错误信息，提示需要认证
-
-#### Scenario: 认证凭据无效
-- **WHEN** 用户发送请求但提供的认证凭据已过期或无效
-- **THEN** 系统 SHALL 返回 401 Unauthorized 状态码
-- **AND** 响应体包含错误信息，提示凭据无效
-
-#### Scenario: 权限不足
-- **WHEN** 用户已认证但没有管理模型配置的权限
-- **THEN** 系统 SHALL 返回 403 Forbidden 状态码
-- **AND** 响应体包含错误信息，提示权限不足
-
 ### Requirement: 更新模型配置 API
 系统 SHALL 提供 PUT /api/models/configs/{id} 接口用于更新模型配置。
 
@@ -123,7 +88,7 @@
 - **AND** 该 ID 的配置存在
 - **AND** 请求体包含有效地更新数据
 - **THEN** 系统 SHALL 返回 200 OK 状态码
-- **AND** 响应体包含更新后的配置信息（api_key 不在响应中返回）
+- **AND** 响应体包含更新后的配置信息（不返回 api_key 字段）
 - **AND** updated_at 字段 SHALL 被更新为当前时间
 
 #### Scenario: 更新时不提供 API key
@@ -142,19 +107,6 @@
 - **AND** 请求体中的 name 与其他配置重复
 - **THEN** 系统 SHALL 返回 400 Bad Request 状态码
 - **AND** 响应体包含错误信息，提示配置名称已存在
-
-#### Scenario: 更新冲突 - 乐观锁
-- **WHEN** 用户发送 PUT 请求到 /api/models/configs/{id}
-- **AND** 请求中的 updated_at 与数据库中的不一致
-- **THEN** 系统 SHALL 返回 409 Conflict 状态码
-- **AND** 响应体包含错误信息，提示配置已被其他用户修改
-
-#### Scenario: 更新失败 - 验证错误
-- **WHEN** 用户发送 PUT 请求到 /api/models/configs/{id}
-- **AND** 请求体包含无效数据
-- **THEN** 系统 SHALL 返回 422 Unprocessable Entity 状态码
-- **AND** 响应体包含详细的验证错误信息
-
 
 ### Requirement: 删除模型配置 API
 系统 SHALL 提供 DELETE /api/models/configs/{id} 接口用于删除模型配置。
@@ -224,13 +176,8 @@
 - **AND** 响应体包含详细的字段级错误信息
 - **AND** 每个字段错误 SHALL 包含字段名和错误描述
 
-### Requirement: 分页支持
+### Requirement: 分页支持（可选）
 系统 SHALL 支持模型配置列表的分页查询。
-
-**默认值和限制**:
-- 默认 page = 1
-- 默认 page_size = 20
-- 最大 page_size = 100
 
 #### Scenario: 使用分页参数
 - **WHEN** 用户发送 GET 请求到 /api/models/configs?page=1&page_size=10

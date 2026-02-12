@@ -1,5 +1,3 @@
-# OpenAI 模型配置规范
-
 ## ADDED Requirements
 
 ### Requirement: 模型配置数据结构
@@ -11,7 +9,7 @@
   - `model_id`: 模型 ID（如 "deepseek-chat"）
   - `support_vision`: 该模型是否支持视觉能力（布尔值）
   - `support_thinking`: 该模型是否支持思考能力（布尔值）
-- `is_active`: 是否启用（布尔值）
+  - `is_active`: 是否启用（布尔值）
 
 #### Scenario: 创建有效的模型配置
 - **WHEN** 用户提供了所有必需字段（name、base_url、api_key、models）
@@ -49,11 +47,6 @@
 - **THEN** 系统 SHALL 返回验证错误
 - **AND** 错误信息 SHALL 提示 API key 不能为空
 
-#### Scenario: 验证配置名称唯一性
-- **WHEN** 用户创建配置时使用了已存在的配置名称
-- **THEN** 系统 SHALL 返回验证错误
-- **AND** 错误信息 SHALL 提示配置名称已存在
-
 ### Requirement: 模型配置激活状态管理
 系统 SHALL 支持启用或禁用模型配置。
 
@@ -73,7 +66,7 @@
 - **AND** 用户可选择使用任意一个启用的配置
 
 ### Requirement: 敏感信息处理
-系统 SHALL 对 API key 等敏感信息进行加密存储和脱敏展示。
+系统 SHALL 对 API key 进行加密存储和脱敏展示。
 
 #### Scenario: 加密存储 API key
 - **WHEN** 用户保存模型配置
@@ -82,7 +75,7 @@
 
 #### Scenario: 脱敏展示 API key
 - **WHEN** 用户查询模型配置列表
-- **THEN** 系统 不返回 api_key 字段（仅显示前 4 位和后 4 位）
+- **THEN** 系统 SHALL 返回脱敏后的 api_key（仅显示前 4 位和后 4 位）
 - **AND** 完整的 api_key SHALL 不被暴露
 
 #### Scenario: 更新时保留原 API key

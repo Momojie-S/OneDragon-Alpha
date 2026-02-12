@@ -1,4 +1,3 @@
-# OpenAI 模型 API 规范
 
 ## ADDED Requirements
 

@@ -1,4 +1,3 @@
-# OpenAI 模型数据库存储规范
 
 ## ADDED Requirements
 

@@ -1,4 +1,3 @@
-# OpenAI 模型前端管理界面规范
 
 ## ADDED Requirements
 

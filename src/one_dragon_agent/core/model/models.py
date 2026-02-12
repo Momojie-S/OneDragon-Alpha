@@ -4,7 +4,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class ModelInfo(BaseModel):
@@ -60,8 +60,8 @@ class ModelConfigBase(BaseModel):
 
     @field_validator("base_url")
     @classmethod
-    def base_url_must_be_valid(cls, v: str) -> str:
-        """验证 baseUrl 格式.
+    def base_url_format_must_be_valid(cls, v: str) -> str:
+        """验证 baseUrl 格式（基本格式验证，不检查 provider）.
 
         Args:
             v: baseUrl
@@ -73,12 +73,32 @@ class ModelConfigBase(BaseModel):
             ValueError: 如果 baseUrl 格式无效
         """
         v = v.strip()
-        # 允许空字符串（用于 qwen provider）
+        # 允许空字符串
         if not v:
             return v
+        # 如果非空，必须以 http:// 或 https:// 开头
         if not v.startswith(("http://", "https://")):
             raise ValueError("baseUrl 必须以 http:// 或 https:// 开头")
         return v
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_provider_base_url_consistency(cls, data: "ModelConfigBase") -> "ModelConfigBase":
+        """验证 provider 和 base_url 的一致性.
+
+        Args:
+            data: 模型配置实例
+
+        Returns:
+            验证后的模型配置
+
+        Raises:
+            ValueError: 如果 provider 和 base_url 不匹配
+        """
+        # Qwen provider 不应该设置 base_url
+        if data.provider == "qwen" and data.base_url:
+            raise ValueError("Qwen provider 不需要设置 baseUrl")
+        return data
 
     @field_validator("models")
     @classmethod
@@ -171,8 +191,8 @@ class ModelConfigUpdate(BaseModel):
 
     @field_validator("base_url")
     @classmethod
-    def base_url_must_be_valid(cls, v: str | None) -> str | None:
-        """验证 baseUrl 格式.
+    def base_url_format_must_be_valid(cls, v: str | None) -> str | None:
+        """验证 baseUrl 格式（基本格式验证，不检查 provider）.
 
         Args:
             v: baseUrl
@@ -185,10 +205,30 @@ class ModelConfigUpdate(BaseModel):
         """
         if v is not None:
             v = v.strip()
-            if not v.startswith(("http://", "https://")):
+            # 如果非空，必须以 http:// 或 https:// 开头
+            if v and not v.startswith(("http://", "https://")):
                 raise ValueError("baseUrl 必须以 http:// 或 https:// 开头")
             return v
         return v
+
+    @model_validator(mode="after")
+    @classmethod
+    def validate_provider_base_url_consistency(cls, data: "ModelConfigUpdate") -> "ModelConfigUpdate":
+        """验证 provider 和 base_url 的一致性.
+
+        Args:
+            data: 模型配置实例
+
+        Returns:
+            验证后的模型配置
+
+        Raises:
+            ValueError: 如果 provider 和 base_url 不匹配
+        """
+        # Qwen provider 不应该设置 base_url
+        if data.provider == "qwen" and data.base_url:
+            raise ValueError("Qwen provider 不需要设置 baseUrl")
+        return data
 
     @field_validator("api_key")
     @classmethod

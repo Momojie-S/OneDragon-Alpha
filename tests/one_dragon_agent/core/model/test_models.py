@@ -56,10 +56,10 @@ class TestModelInfo:
 class TestModelConfigCreate:
     """ModelConfigCreate 模型测试类."""
 
-    def test_create_config_success(self) -> None:
-        """测试成功创建配置.
+    def test_create_openai_config_success(self) -> None:
+        """测试成功创建 OpenAI 配置.
 
-        Given: 有效的配置数据
+        Given: 有效的 OpenAI 配置数据
         When: 创建 ModelConfigCreate 对象
         Then: 对象创建成功
         """
@@ -87,6 +87,72 @@ class TestModelConfigCreate:
         assert config.provider == "openai"
         assert config.base_url == "https://api.deepseek.com"
         assert len(config.models) == 1
+
+    def test_create_qwen_config_with_empty_base_url_success(self) -> None:
+        """测试创建 Qwen 配置时 base_url 为空字符串.
+
+        Given: Qwen provider 且 base_url 为空
+        When: 创建 ModelConfigCreate 对象
+        Then: 对象创建成功
+        """
+        # Given
+        config_data = {
+            "name": "Qwen 测试配置",
+            "provider": "qwen",
+            "base_url": "",  # Qwen 不需要 base_url
+            "api_key": "",  # Qwen 不需要 api_key
+            "models": [{"model_id": "qwen-max"}],
+        }
+
+        # When
+        config = ModelConfigCreate(**config_data)
+
+        # Then
+        assert config.provider == "qwen"
+        assert config.base_url == ""
+
+    def test_create_qwen_config_with_base_url_fails(self) -> None:
+        """测试创建 Qwen 配置时设置了 base_url 验证失败.
+
+        Given: Qwen provider 但 base_url 非空
+        When: 创建 ModelConfigCreate 对象
+        Then: 抛出 ValueError 异常
+        """
+        # Given
+        config_data = {
+            "name": "Qwen 测试配置",
+            "provider": "qwen",
+            "base_url": "https://api.example.com",  # Qwen 不应该设置 base_url
+            "api_key": "",
+            "models": [{"model_id": "qwen-max"}],
+        }
+
+        # When & Then
+        with pytest.raises(ValueError, match="Qwen provider 不需要设置 baseUrl"):
+            ModelConfigCreate(**config_data)
+
+    def test_create_openai_config_with_empty_base_url_success(self) -> None:
+        """测试创建 OpenAI 配置时 base_url 为空字符串.
+
+        Given: OpenAI provider 且 base_url 为空字符串（允许）
+        When: 创建 ModelConfigCreate 对象
+        Then: 对象创建成功
+        """
+        # Given
+        config_data = {
+            "name": "OpenAI 测试配置",
+            "provider": "openai",
+            "base_url": "",  # 允许空字符串
+            "api_key": "sk-test",
+            "models": [{"model_id": "gpt-4"}],
+        }
+
+        # When
+        config = ModelConfigCreate(**config_data)
+
+        # Then
+        assert config.provider == "openai"
+        assert config.base_url == ""
 
     def test_create_config_name_empty_fails(self) -> None:
         """测试配置名称为空时验证失败.
@@ -173,6 +239,40 @@ class TestModelConfigUpdate:
         assert update.is_active is False
         assert update.provider is None
         assert update.base_url is None
+
+    def test_update_qwen_provider_with_base_url_fails(self) -> None:
+        """测试更新 Qwen 配置时设置了 base_url 验证失败.
+
+        Given: provider 为 qwen 且 base_url 非空
+        When: 创建 ModelConfigUpdate 对象
+        Then: 抛出 ValueError 异常
+        """
+        # Given
+        update_data = {
+            "provider": "qwen",
+            "base_url": "https://api.example.com",
+        }
+
+        # When & Then
+        with pytest.raises(ValueError, match="Qwen provider 不需要设置 baseUrl"):
+            ModelConfigUpdate(**update_data)
+
+    def test_update_openai_provider_with_invalid_base_url_fails(self) -> None:
+        """测试更新 OpenAI 配置时 base_url 格式无效验证失败.
+
+        Given: provider 为 openai 且 base_url 格式无效
+        When: 创建 ModelConfigUpdate 对象
+        Then: 抛出 ValueError 异常
+        """
+        # Given
+        update_data = {
+            "provider": "openai",
+            "base_url": "invalid-url",
+        }
+
+        # When & Then
+        with pytest.raises(ValueError, match="baseUrl 必须以 http:// 或 https:// 开头"):
+            ModelConfigUpdate(**update_data)
 
     def test_update_config_allows_empty_api_key(self) -> None:
         """测试允许 api_key 为空（表示不修改）.

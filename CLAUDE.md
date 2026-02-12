@@ -73,8 +73,11 @@ uv run ruff format src/ tests/    # 代码格式化
   4.5. 按测试计划，编写 Playwright 测试代码，仅做少量的核心场景，并完成测试。
   4.6. 对于前端核心函数，进行单元测试。
   4.7. 进行详细的代码Review。
-5. 进行 opsx 归档。
-6. 提交到 Github 并创建 PR。
+5. 如果开发、测试过程中，调整了实现方案，需要更新对应 opsx 的设计文档。
+6. 进行 opsx 归档。
+  - 禁止使用移动文件夹或者复制文件夹的方式进行归档。
+  - 禁止使用 `--skip-specs` 。
+7. 提交到 Github 并创建 PR。
 
 
 ### 后端开发规范
@@ -137,7 +140,7 @@ uv run ruff format src/ tests/    # 代码格式化
 
 - 你可以先制定测试计划，或者只在测试文件上写注释说明需要测试的场景。
 - 在编写具体测试代码前，你必须要先使用 chrome-devtools 工具进行调试，确保前端运作和测试预期一致。如果不一致，则可能是代码问题或者测试计划问题，进行修改。
-- chrome-devtools工具需要先启动chrome实例，并固定连接9222端口。你需要先判断chrome实例是否在运行，如果没有，你必须使用 `chromium-browser --headless --remote-debugging-port=9222 --no-sandbox > /dev/null 2>&1` 在后台启动一个chrome实例。
+- chrome-devtools工具需要先启动chrome实例，并固定连接9222端口。你需要先判断chrome实例是否在运行，如果没有，你必须使用 `chromium-browser --headless --remote-debugging-port=9222 --no-sandbox --disable-gpu > /dev/null 2>&1` 在后台启动一个chrome实例。
 - 使用 chrome-devtools 调试成功后，再编写具体的测试代码。
 - 测试过程遇到问题时，应积极使用 chrome-devtools 工具进行调试。
 - 进行 Playwright 的 E2E 测试时，必须使用 headless 模式。
@@ -146,13 +149,17 @@ uv run ruff format src/ tests/    # 代码格式化
   - 所有测试创建的数据使用 `test_` 前缀标记（如 id 为 `test_user_123` 或 name 为 `test_session_abc`），以便清理接口识别。
   - 在 Playwright 测试中使用 `beforeEach` 和 `afterEach` 钩子调用清理接口，确保测试前后数据库处于干净状态。
   - 测试令牌通过 `TEST_TOKEN` 环境变量配置，在 `.env.test` 和 Playwright 配置中设置。
+- 仅操作测试数据: 编写测试流程时，必须只操作测试数据，不能操作真实数据，如果缺少测试数据，则测试流程中需要制造测试数据来完成测试。
 - 大模型选用 - 测试时如果需要使用真实的大模型，必须要使用 `ModelScope-Free` 下的 `moonshotai/Kimi-K2.5` 模型。
+
 
 ## 工具说明
 
 - opsx - 保持使用 opsx 工具，按 spec-driven 的方式进行开发。
 - context7 - 积极使用 context7 工具搜索使用文档。例如，设计时需要了解依赖库的能力、开发测试时遇到调用方法不存在、参数个数不一致、参数类型不一致等场景。
 - tushare-docs-mcp - 对于tushare库，是用 tushare-docs-mcp 工具进行搜索文档，而不是 context7。
-- bash - 需要临时运行服务时，使用Bash工具原生的后台运行能力，而不是在命令中增加 `nohup` 或者 后缀 `&` 的方式运行。
+- Bash:
+  - 需要临时运行服务时，使用Bash工具原生的后台运行能力，而不是在命令中增加 `nohup` 或者 后缀 `&` 的方式运行。
+  - 禁止调用Bash时传入多行命令，如果需要，先在临时文件夹生成复杂脚本，再运行。
 - agent team - 启动 agent team 时，leader需要同步更新opsx状态。
 
