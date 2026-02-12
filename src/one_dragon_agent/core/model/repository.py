@@ -540,6 +540,73 @@ class ModelConfigRepository:
 
         return True
 
+    async def cleanup_test_data(self, prefix: str = "test_e2e_") -> int:
+        """清理所有指定前缀的测试数据.
+
+        Args:
+            prefix: 测试数据前缀（默认 "test_e2e_"）
+
+        Returns:
+            删除的记录数
+        """
+        table = model_configs_table
+
+        # 使用 LIKE 查询匹配前缀
+        stmt = delete(table).where(table.c.name.like(f"{prefix}%"))
+
+        result = await self._session.execute(stmt)
+        deleted_count = result.rowcount
+        await self._session.commit()
+
+        logger.info(f"已删除 {deleted_count} 条测试数据（前缀: {prefix}）")
+        return deleted_count
+
+    async def get_test_data_stats(self, prefix: str = "test_e2e_") -> dict:
+        """获取测试数据统计信息.
+
+        Args:
+            prefix: 测试数据前缀（默认 "test_e2e_"）
+
+        Returns:
+            统计信息字典
+        """
+        table = model_configs_table
+
+        # 查询测试数据总数
+        count_stmt = select(func.count()).select_from(table).where(
+            table.c.name.like(f"{prefix}%")
+        )
+        total_result = await self._session.execute(count_stmt)
+        total_count = total_result.scalar() or 0
+
+        # 查询最新和最老的测试数据
+        time_stmt = (
+            select(table.c.created_at)
+            .where(table.c.name.like(f"{prefix}%"))
+            .order_by(table.c.created_at.desc())
+        )
+        time_result = await self._session.execute(time_stmt)
+        all_times = time_result.scalars().all()
+
+        newest_at = all_times[0] if all_times else None
+        oldest_at = all_times[-1] if all_times else None
+
+        # 查询所有唯一前缀
+        prefix_stmt = (
+            select(func.substr(table.c.name, 1, len(prefix)))
+            .where(table.c.name.like(f"{prefix}%"))
+            .distinct()
+        )
+        prefix_result = await self._session.execute(prefix_stmt)
+        prefixes = prefix_result.scalars().all()
+
+        return {
+            "test_data_count": total_count,
+            "test_data_prefixes": list(prefixes),
+            "oldest_test_data": oldest_at,
+            "newest_test_data": newest_at,
+        }
+
     async def toggle_config_status(
         self, config_id: int, is_active: bool
     ) -> ModelConfigResponse:

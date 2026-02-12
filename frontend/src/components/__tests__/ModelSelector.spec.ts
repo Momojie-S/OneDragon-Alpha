@@ -18,7 +18,7 @@ describe('ModelSelector.vue', () => {
   const mockModelConfigs: ModelConfig[] = [
     {
       id: 1,
-      name: 'DeepSeek 官方',
+      name: 'test_config_deepseek',
       provider: 'openai',
       base_url: 'https://api.deepseek.com',
       models: [
@@ -31,7 +31,7 @@ describe('ModelSelector.vue', () => {
     },
     {
       id: 2,
-      name: 'OpenAI GPT-4',
+      name: 'test_config_openai_gpt4',
       provider: 'openai',
       base_url: 'https://api.openai.com',
       models: [{ model_id: 'gpt-4', support_vision: true, support_thinking: true }],
@@ -314,7 +314,7 @@ describe('ModelSelector.vue', () => {
       const config = mockModelConfigs[0]
       const label = wrapper.vm.formatOptionLabel(config)
 
-      expect(label).toBe('DeepSeek 官方 (2个模型)')
+      expect(label).toBe('test_config_deepseek (2个模型)')
 
       wrapper.unmount()
     })

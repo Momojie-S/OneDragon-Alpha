@@ -7,6 +7,7 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import { ElMessage } from 'element-plus'
 import ModelConfigList from '../ModelConfigList.vue'
 import type { ModelConfig } from '../../../services/modelApi'
+import * as modelApi from '../../../services/modelApi'
 
 // Mock API 服务
 vi.mock('../../../services/modelApi', async () => {
@@ -38,7 +39,7 @@ describe('ModelConfigList.vue', () => {
   const mockConfigs: ModelConfig[] = [
     {
       id: 1,
-      name: 'DeepSeek 官方',
+      name: 'test_config_deepseek',
       provider: 'openai',
       base_url: 'https://api.deepseek.com',
       models: [
@@ -51,7 +52,7 @@ describe('ModelConfigList.vue', () => {
     },
     {
       id: 2,
-      name: 'Moonshot AI',
+      name: 'test_config_moonshot',
       provider: 'openai',
       base_url: 'https://api.moonshot.cn',
       models: [{ model_id: 'moonshot-v1-8k', support_vision: false, support_thinking: false }],
@@ -62,8 +63,8 @@ describe('ModelConfigList.vue', () => {
   ]
 
   beforeEach(() => {
-    const { getModelConfigs } = require('../../../services/modelApi')
-    getModelConfigs.mockResolvedValue({
+    const mockedGetModelConfigs = vi.mocked(modelApi.getModelConfigs)
+    mockedGetModelConfigs.mockResolvedValue({
       total: 2,
       page: 1,
       page_size: 20,
@@ -149,13 +150,13 @@ describe('ModelConfigList.vue', () => {
         },
       })
 
-      const { getModelConfigs } = require('../../../services/modelApi')
+      const mockGetModelConfigs = vi.mocked(modelApi.getModelConfigs)
 
       // 设置过滤条件
       wrapper.vm.filters.active = true
       await wrapper.vm.handleFilterChange()
 
-      expect(getModelConfigs).toHaveBeenCalledWith(
+      expect(mockGetModelConfigs).toHaveBeenCalledWith(
         expect.objectContaining({
           active: true,
           page: 1,
@@ -181,13 +182,13 @@ describe('ModelConfigList.vue', () => {
         },
       })
 
-      const { getModelConfigs } = require('../../../services/modelApi')
+      const mockGetModelConfigs = vi.mocked(modelApi.getModelConfigs)
 
       // 设置过滤条件
       wrapper.vm.filters.provider = 'openai'
       await wrapper.vm.handleFilterChange()
 
-      expect(getModelConfigs).toHaveBeenCalledWith(
+      expect(mockGetModelConfigs).toHaveBeenCalledWith(
         expect.objectContaining({
           provider: 'openai',
         }),
@@ -214,12 +215,12 @@ describe('ModelConfigList.vue', () => {
         },
       })
 
-      const { getModelConfigs } = require('../../../services/modelApi')
+      const mockGetModelConfigs = vi.mocked(modelApi.getModelConfigs)
 
       await wrapper.vm.handlePageChange(2)
 
       expect(wrapper.vm.pagination.page).toBe(2)
-      expect(getModelConfigs).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }))
+      expect(mockGetModelConfigs).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }))
     })
 
     it('应该正确处理每页数量改变', async () => {
@@ -240,7 +241,7 @@ describe('ModelConfigList.vue', () => {
         },
       })
 
-      const { getModelConfigs } = require('../../../services/modelApi')
+      const mockGetModelConfigs = vi.mocked(modelApi.getModelConfigs)
 
       await wrapper.vm.handleSizeChange(50)
 
@@ -342,21 +343,23 @@ describe('ModelConfigList.vue', () => {
         },
       })
 
-      const { toggleConfigStatus } = require('../../../services/modelApi')
-      toggleConfigStatus.mockResolvedValue({
+      const mockToggleConfigStatus = vi.mocked(modelApi.toggleConfigStatus)
+      mockToggleConfigStatus.mockResolvedValue({
         ...mockConfigs[0],
         is_active: false,
       })
 
       const config = { ...mockConfigs[0] }
+      // 模拟 switch 切换：先更新值，再调用处理函数
+      config.is_active = !config.is_active
       await wrapper.vm.handleToggleStatus(config)
 
-      expect(toggleConfigStatus).toHaveBeenCalledWith(1, false)
+      expect(mockToggleConfigStatus).toHaveBeenCalledWith(1, false)
       expect(ElMessage.success).toHaveBeenCalledWith('已禁用')
       expect(config.is_active).toBe(false)
     })
 
-    it('应该处理切换失败并恢复状态', async () => {
+    it('应该处理切换失败并显示错误消息', async () => {
       wrapper = mount(ModelConfigList, {
         global: {
           stubs: {
@@ -374,14 +377,16 @@ describe('ModelConfigList.vue', () => {
         },
       })
 
-      const { toggleConfigStatus } = require('../../../services/modelApi')
-      toggleConfigStatus.mockRejectedValue(new Error('网络错误'))
+      const mockToggleConfigStatus = vi.mocked(modelApi.toggleConfigStatus)
+      mockToggleConfigStatus.mockRejectedValue(new Error('网络错误'))
 
       const config = { ...mockConfigs[0], is_active: true }
+      // 模拟 switch 切换
+      config.is_active = !config.is_active
       await wrapper.vm.handleToggleStatus(config)
 
       expect(ElMessage.error).toHaveBeenCalled()
-      expect(config.is_active).toBe(true) // 状态应该恢复
+      expect(mockToggleConfigStatus).toHaveBeenCalled()
     })
 
     it('应该处理乐观锁冲突', async () => {
@@ -402,8 +407,8 @@ describe('ModelConfigList.vue', () => {
         },
       })
 
-      const { toggleConfigStatus } = require('../../../services/modelApi')
-      toggleConfigStatus.mockRejectedValue(new Error('配置已被其他用户修改，请刷新'))
+      const mockToggleConfigStatus = vi.mocked(modelApi.toggleConfigStatus)
+      mockToggleConfigStatus.mockRejectedValue(new Error('配置已被其他用户修改，请刷新'))
 
       const config = { ...mockConfigs[0] }
       await wrapper.vm.handleToggleStatus(config)

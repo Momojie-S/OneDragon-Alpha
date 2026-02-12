@@ -389,3 +389,131 @@ async def test_connection(
             message=f"测试失败: {str(e)}",
             raw_error={"error": str(e)},
         )
+
+
+@router.delete(
+    "/cleanup-test-data",
+    summary="清理测试数据",
+    description="删除所有以 test_e2e_ 开头的测试配置（需要 x-test-token 验证）",
+)
+async def cleanup_test_data(
+    session: SessionDep,
+    x_test_token: Annotated[
+        str | None, Header(alias="x-test-token", description="测试令牌")
+    ] = None,
+) -> dict:
+    """清理所有测试数据.
+
+    仅删除名称以 'test_e2e_' 开头的配置。
+    需要通过 x-test-token 请求头验证。
+
+    Args:
+        session: 数据库会话
+        x_test_token: 测试令牌
+
+    Returns:
+        删除结果
+
+    Raises:
+        HTTPException: 如果令牌验证失败
+    """
+    # 验证测试令牌
+    test_token = os.getenv("TEST_TOKEN")
+    if not test_token:
+        logger.warning("尝试清理测试数据，但 TEST_TOKEN 未配置")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="测试功能在生产环境中被禁用",
+        )
+
+    if x_test_token != test_token:
+        logger.warning(f"测试令牌验证失败: {x_test_token}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的测试令牌",
+        )
+
+    try:
+        from one_dragon_agent.core.model.repository import ModelConfigRepository
+
+        repo = ModelConfigRepository(session)
+        deleted_count = await repo.cleanup_test_data(prefix="test_e2e_")
+
+        logger.info(f"测试数据清理成功，删除 {deleted_count} 条记录")
+        return {
+            "success": True,
+            "deleted_count": deleted_count,
+            "message": f"已删除 {deleted_count} 条测试数据",
+        }
+
+    except Exception as e:
+        logger.exception(f"清理测试数据时发生错误: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"清理失败: {str(e)}",
+        ) from e
+
+
+@router.get(
+    "/test-data-stats",
+    summary="获取测试数据统计",
+    description="获取测试数据的统计信息（需要 x-test-token 验证）",
+)
+async def get_test_data_stats(
+    session: SessionDep,
+    x_test_token: Annotated[
+        str | None, Header(alias="x-test-token", description="测试令牌")
+    ] = None,
+) -> dict:
+    """获取测试数据统计信息.
+
+    Args:
+        session: 数据库会话
+        x_test_token: 测试令牌
+
+    Returns:
+        测试数据统计信息
+
+    Raises:
+        HTTPException: 如果令牌验证失败
+    """
+    # 验证测试令牌
+    test_token = os.getenv("TEST_TOKEN")
+    if not test_token:
+        logger.warning("尝试获取测试数据统计，但 TEST_TOKEN 未配置")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="测试功能在生产环境中被禁用",
+        )
+
+    if x_test_token != test_token:
+        logger.warning(f"测试令牌验证失败: {x_test_token}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的测试令牌",
+        )
+
+    try:
+        from one_dragon_agent.core.model.repository import ModelConfigRepository
+
+        repo = ModelConfigRepository(session)
+        stats = await repo.get_test_data_stats(prefix="test_e2e_")
+
+        return {
+            "test_data_count": stats["test_data_count"],
+            "test_data_prefixes": stats["test_data_prefixes"],
+            "oldest_test_data": stats["oldest_test_data"].isoformat()
+            if stats.get("oldest_test_data")
+            else None,
+            "newest_test_data": stats["newest_test_data"].isoformat()
+            if stats.get("newest_test_data")
+            else None,
+        }
+
+    except Exception as e:
+        logger.exception(f"获取测试数据统计时发生错误: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取统计失败: {str(e)}",
+        ) from e
+
