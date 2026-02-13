@@ -1,0 +1,10 @@
+{
+  "env": {
+    "ENABLE_LSP_TOOL": "true"
+  },
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true
+  }
+}
