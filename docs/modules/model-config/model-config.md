@@ -27,7 +27,7 @@
 
 ## 模块结构
 
-```
+```text
 one_dragon_agent/core/model/
 ├── models.py           # Pydantic 数据模型
 ├── repository.py       # 数据库访问层
@@ -54,7 +54,7 @@ one_dragon_agent/core/model/
 
 创建模型配置时的数据结构：
 - `name`: 配置名称（唯一）
-- `provider`: 提供商（支持 "openai"）
+- `provider`: 提供商（支持 "openai"、"qwen"）
 - `base_url`: API 基础 URL
 - `api_key`: API 密钥
 - `models`: 模型列表

@@ -56,7 +56,7 @@ GitHub Pull Request Review 处理指南。
 
 ## 📂 文件结构
 
-```
+```text
 .claude/skills/github-pr-review/
 ├── SKILL.md              # 完整工作流指南
 ├── README.md             # 本文件

@@ -21,7 +21,7 @@ OneDragon-Alpha 是一个前后端分离的 AI 应用项目。
 
 ## 目录结构
 
-```
+```text
 OneDragon-Alpha/
 ├── src/                # Python 后端代码主入口
 ├── frontend/           # Vue 前端代码
