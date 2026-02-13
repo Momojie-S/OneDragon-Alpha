@@ -55,3 +55,44 @@ pyright-lsp 插件通过 Language Server Protocol 连接到 Pyright 服务，为
 ```
 npm install -g pyright
 ```
+
+## GitHub CLI (gh)
+
+GitHub CLI 是 GitHub 的官方命令行工具，项目的某些技能（如 GitHub PR 审查）需要使用 `gh` 命令。
+
+官网：https://cli.github.com/
+
+### 安装
+
+安装指南：https://github.com/cli/cli#installation
+
+### 认证
+
+安装完成后，需要创建 GitHub Personal Access Token 并进行认证。
+
+**创建 Token**:
+
+1. 访问 https://github.com/settings/apps
+2. 点击 "Personal access tokens" → "Fine-grained tokens"
+3. 点击 "Generate new token"
+4. 设置 Token 名称、有效期和访问范围（选择需要访问的仓库）
+5. 选择所需权限：
+   - Repository permissions:
+     - `Contents` - Read and write（用于 PR 操作）
+     - `Pull requests` - Read and write（用于 PR 审查）
+6. 点击生成并复制 Token
+
+**认证**:
+
+```bash
+gh auth login
+# 选择 GitHub.com
+# 选择 HTTPS
+# 粘贴刚才创建的 Token
+```
+
+**验证**:
+
+```bash
+gh auth status
+```
