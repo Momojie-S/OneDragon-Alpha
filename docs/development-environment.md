@@ -34,28 +34,6 @@ openspec update
 
 项目通过 opsx 命令（OpenSpec 的封装）进行开发工作流管理，详见 CLAUDE.md 中的开发流程规范。
 
-## Pyright
-
-Pyright 是 Python 语言服务器（LSP Server），为 Claude Code 的 pyright-lsp 插件提供类型检查和代码智能功能。
-
-官网：https://github.com/microsoft/pyright
-
-### 功能
-
-pyright-lsp 插件通过 Language Server Protocol 连接到 Pyright 服务，为 Claude Code 提供代码智能功能：
-
-- 即时诊断：在每次编辑后立即显示错误和警告
-- 代码导航：跳转到定义、查找引用、获取类型信息
-- 语言感知：提供类型信息和代码符号文档
-
-### 安装
-
-使用 npm 全局安装 Pyright 语言服务器：
-
-```
-npm install -g pyright
-```
-
 ## GitHub CLI (gh)
 
 GitHub CLI 是 GitHub 的官方命令行工具，项目的某些技能（如 GitHub PR 审查）需要使用 `gh` 命令。
@@ -96,3 +74,18 @@ gh auth login
 ```bash
 gh auth status
 ```
+
+## Claude Code 配置
+
+### 插件安装
+
+在项目根目录运行以下命令安装插件：
+
+```bash
+claude plugin marketplace add OneDragon-Anything/OneDragon-CC-Plugins
+```
+
+#### 所需插件列表
+
+- uv-pyright-lsp - 使用uv run运行的LSP server
+

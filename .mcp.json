@@ -2,8 +2,23 @@
   "mcpServers": {
     "chrome-devtools": {
       "type": "stdio",
-      "command": "npx chrome-devtools-mcp@latest -u http://127.0.0.1:9222",
-      "args": [],
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "-u",
+        "http://127.0.0.1:9222",
+        "--no-performance-crux",
+        "--no-usage-statistics"
+      ],
+      "env": {}
+    },
+    "tushare-docs-mcp": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "tushare-docs-mcp",
+        "stdio"
+      ],
       "env": {}
     }
   }
